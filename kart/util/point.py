@@ -13,7 +13,7 @@ class Point(object):
     """
     Abstract class representing a single stored position.
     """
-    # this class might benefit from extending Mathutils.Vector
+    # this class might benefit from extending mathutils.Vector
 
     def __init__(self, abs_pos: ty.Tuple[float, float]):
         self.abs_pos = Vector(abs_pos)
