@@ -15,8 +15,11 @@ Main Module, holds GoKart class
 # inconvenience then benefit.
 
 import threading as th
+import typing as ty
 
 from .drive_data import DriveData
+
+FAIL_SAFE_FRQ = 4  # Hz
 
 
 class GoKart:
@@ -29,7 +32,7 @@ class GoKart:
         Instantiates GoKart class and creates instance of
         logic instances at start of run.
         """
-        self.drive_data = lo
+        self.drive_data = DriveData()
         self.sensor_th = th.Thread(
             target=self.sensor_main,
             name='Sensor Thread')
@@ -42,6 +45,8 @@ class GoKart:
         self.fail_safe_th = th.Thread(
             target=self.fail_safe_main,
             name='Fail-Safe Thread')
+        # convenience iterable
+        self.main_threads = self.sensor_th, self.actuator_th, self.logic_th
 
     def main(self) -> None:
         """
@@ -53,6 +58,7 @@ class GoKart:
         self.sensor_th.start()
         self.logic_th.start()
         self.actuator_th.start()
+        self.fail_safe_th.start()
         # TODO: exit conditions, error handling, etc
 
     def sensor_main(self) -> None:
@@ -93,7 +99,22 @@ class GoKart:
 
         :return: None
         """
-        # TODO
+        while True:
+            if not self.all_threads_running:
+                print('MAIN THREAD HAS DIED')
+                # todo: prevent disaster
+            th.current_thread().sleep(1/FAIL_SAFE_FRQ)
+            # is there a better way to handle frequent sleeping?
+
+    @property
+    def all_threads_running(self) -> bool:
+        """
+        Returns bool of whether all threads are running normally.
+        This returns false if any thread has exited, died due to an
+        exception, or any other cause.
+        :return: bool
+        """
+        return all(thread.is_alive() for thread in self.main_threads)
 
 
 if __name__ == '__main__':

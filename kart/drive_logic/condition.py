@@ -10,7 +10,8 @@ class Condition(object):
     depending on its state
     """
 
-    def __init__(self, state_test: ty.Callable):
+    def __init__(self, state_test: ty.Callable[[], bool],  name: str=None):
+        self.name = name
         self.test = state_test
         self.last_state = None
         self.on_true_funcs = []
@@ -23,9 +24,7 @@ class Condition(object):
         logic tic: updates condition and calls methods as appropriate
         :return: None
         """
-        # why does this next line raise an ide warning??? (Pycharm) 
-        # anyone? ;  "'Callable' object is not callable"
-        new_state = self.test()  
+        new_state = self.test()
         if new_state and not self.last_state:
             _run_all(self.on_true_funcs)  # run all on_true funcs
         if not new_state and (self.last_state or self.last_state is None):
@@ -70,8 +69,15 @@ class Condition(object):
         """
         self.while_false_funcs.append(func)
 
+    def __repr__(self) -> str:
+        """
+        Returns string repr of condition
+        :return: str
+        """
+        return 'Condition %s[%s]' % (self.name, self.test)
 
-def _run_all(runnable_collection):
+
+def _run_all(runnable_collection: ty.Iterable[ty.Callable[[], None]]):
     [func() for func in runnable_collection]
 
 
