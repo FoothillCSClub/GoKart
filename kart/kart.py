@@ -16,10 +16,19 @@ Main Module, holds GoKart class
 
 import threading as th
 import typing as ty
+import time
 
 from .drive_data import DriveData
 
-FAIL_SAFE_FRQ = 4  # Hz
+# Main function call frequencies.
+# Can be used to limit the amount of cpu time a thread uses
+# to prevent fast running threads hogging system resources.
+# 0 is unlimited
+# These should be edited as needed.
+SENSOR_TH_FRQ = 60  # Hz
+LOGIC_FRQ = 60      # Hz
+ACTUATOR_FRQ = 60   # Hz
+FAIL_SAFE_FRQ = 4   # Hz
 
 
 class GoKart:
@@ -61,6 +70,7 @@ class GoKart:
         self.fail_safe_th.start()
         # TODO: exit conditions, error handling, etc
 
+    @loop(SENSOR_TH_FRQ)
     def sensor_main(self) -> None:
         """
         Main method for sensor handling thread.
@@ -70,6 +80,7 @@ class GoKart:
         """
         # TODO
 
+    @loop(LOGIC_FRQ)
     def logic_main(self) -> None:
         """
         Main method for logic handling thread.
@@ -79,6 +90,7 @@ class GoKart:
         """
         # TODO
 
+    @loop(ACTUATOR_FRQ)
     def actuator_main(self) -> None:
         """
         Main method that controls output based on set target speed
@@ -87,6 +99,7 @@ class GoKart:
         """
         # TODO
 
+    @loop(FAIL_SAFE_FRQ)  # this method loops at passed frq until quit
     def fail_safe_main(self) -> None:
         """
         Method that looks for fatal errors in any of the other threads
@@ -99,12 +112,11 @@ class GoKart:
 
         :return: None
         """
-        while True:
-            if not self.all_threads_running:
-                print('MAIN THREAD HAS DIED')
-                # todo: prevent disaster
-            th.current_thread().sleep(1/FAIL_SAFE_FRQ)
-            # is there a better way to handle frequent sleeping?
+        if not self.all_threads_running:
+            print('MAIN THREAD HAS DIED')
+            # todo: prevent disaster
+        th.current_thread().sleep(1/FAIL_SAFE_FRQ)
+        # is there a better way to handle frequent sleeping?
 
     @property
     def all_threads_running(self) -> bool:
@@ -115,6 +127,36 @@ class GoKart:
         :return: bool
         """
         return all(thread.is_alive() for thread in self.main_threads)
+
+
+def loop(frq: float=0., exit_test: ty.Callable[[], bool]=None):
+    """
+    Returns a decorator that loops function at specified frq (in Hz)
+    for as long as program runs or until a passed exit_test
+    returns True.
+
+    This decorator is intended to be placed on a method, since it
+    passes a 'self' arg. If it in the future needs to be applied to
+    functions not belonging to a class, the implementation can be
+    updated for the wider scope.
+
+    :param frq: frequency at which function is looped
+    :param exit_test: Callable[[] bool]
+    :return: decorator
+    """
+    loop_t = 1/frq if frq > 0 else 0
+
+    def decorator(func):
+        def wrapper(self, *args, **kwargs):
+            while exit_test() if exit_test else True:
+                start_time = time.time()
+                func(self, *args, **kwargs)
+                elapsed_t = time.time() - start_time
+                down_time = loop_t - elapsed_t
+                if down_time > 0:
+                    time.sleep(down_time)  # sleeps current thread
+        return wrapper
+    return decorator
 
 
 if __name__ == '__main__':
