@@ -22,13 +22,12 @@ from .drive_data import DriveData
 
 # Main function call frequencies.
 # Can be used to limit the amount of cpu time a thread uses
-# to prevent fast running threads hogging system resources.
+# to prevent fast running threads from hogging system resources.
 # 0 is unlimited
 # These should be edited as needed.
 SENSOR_TH_FRQ = 60  # Hz
 LOGIC_FRQ = 60      # Hz
 ACTUATOR_FRQ = 60   # Hz
-FAIL_SAFE_FRQ = 4   # Hz
 
 
 class GoKart:
@@ -51,9 +50,6 @@ class GoKart:
         self.actuator_th = th.Thread(
             target=self.actuator_main,
             name='Actuator Thread')
-        self.fail_safe_th = th.Thread(
-            target=self.fail_safe_main,
-            name='Fail-Safe Thread')
         # convenience iterable
         self.main_threads = self.sensor_th, self.actuator_th, self.logic_th
 
@@ -64,10 +60,14 @@ class GoKart:
         methods.
         :return: None
         """
-        self.sensor_th.start()
-        self.logic_th.start()
-        self.actuator_th.start()
-        self.fail_safe_th.start()
+        try:
+            self.sensor_th.start()
+            self.logic_th.start()
+            self.actuator_th.start()
+        except Exception:
+            # catch any exception that would end program execution so
+            # that we can prevent disaster
+            pass  # TODO
         # TODO: exit conditions, error handling, etc
 
     @loop(SENSOR_TH_FRQ)
@@ -98,25 +98,6 @@ class GoKart:
         :return: None
         """
         # TODO
-
-    @loop(FAIL_SAFE_FRQ)  # this method loops at passed frq until quit
-    def fail_safe_main(self) -> None:
-        """
-        Method that looks for fatal errors in any of the other threads
-        and is responsible for preventing bad things from happening.
-        This thread should bring everything to a halt and not be
-        worried about any kind of graceful error recovery or whatnot
-
-        Things this thread should look for are;
-            non-responsive main threads
-
-        :return: None
-        """
-        if not self.all_threads_running:
-            print('MAIN THREAD HAS DIED')
-            # todo: prevent disaster
-        th.current_thread().sleep(1/FAIL_SAFE_FRQ)
-        # is there a better way to handle frequent sleeping?
 
     @property
     def all_threads_running(self) -> bool:
@@ -149,12 +130,12 @@ def loop(frq: float=0., exit_test: ty.Callable[[], bool]=None):
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             while exit_test() if exit_test else True:
+                # is there a better way to handle frequent sleeping?
                 start_time = time.time()
-                func(self, *args, **kwargs)
+                func(self, *args, **kwargs)  # call decorated method
                 elapsed_t = time.time() - start_time
-                down_time = loop_t - elapsed_t
-                if down_time > 0:
-                    time.sleep(down_time)  # sleeps current thread
+                if loop_t > elapsed_t:
+                    time.sleep(loop_t - elapsed_t)  # sleeps current thread
         return wrapper
     return decorator
 
