@@ -62,10 +62,17 @@ class Display:
 
 
 class PointMapCanvas(scene.SceneCanvas):
+    """
+    Extends SceneCanvas from VisPy library
+    """
     _draw_func = None  # function called each time canvas is drawn
 
     @property
     def draw_func(self):
+        """
+        Function called at draw time, each frame
+        :return: None
+        """
         return self._draw_func
 
     @draw_func.setter
