@@ -3,13 +3,13 @@ import time as t
 import math
 import numpy as np
 
-SAMPLE_DISTANCE = 16
+SAMPLE_DISTANCE = 10
 
 SENSOR_MAX_DEPTH = 4.
 SENSOR_PIXEL_HEIGHT = 480
 SENSOR_PIXEL_WIDTH = 640
-SENSOR_ANGULAR_WIDTH = math.radians(58.5);
-SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
+SENSOR_ANGULAR_WIDTH = math.radians(58.5) * 2;
+SENSOR_ANGULAR_HEIGHT = math.radians(46.6) * 2
 SENSOR_ANGULAR_ELEVATION = math.radians(0.)
 
 
@@ -91,16 +91,19 @@ class KinGeo:
                 if depth == 2047:
                     continue  # if depth is max value, ignore it.
                 angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
-                    SENSOR_ANGULAR_WIDTH * 2
+                    SENSOR_ANGULAR_WIDTH
                 angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
-                    SENSOR_ANGULAR_HEIGHT * 2 + SENSOR_ANGULAR_ELEVATION * 2
+                    SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
+                depth_from_cam = depth + 819.
                 pos = np.array((
-                    math.sin(angularX) * depth / 2048,
-                    # math.cos(angularX) * math.cos(angularY) * depth,
-                    (depth ** 3 / 393216) / 2048,
+                    # math.tan(angularX) * depth_from_cam / 2048,
+                    angularX,
+                    # math.cos(angularXs) * math.cos(angularY) * depth,
+                    0.1236 * math.tan(depth / 2842.5 + 1.1863),
                     # 393216
                     # 524288
-                    - math.sin(angularY) * depth / 2048,
+                    # - math.tan(angularY) * depth_from_cam / 2048,
+                    -angularY
                 )).astype(np.float32)
                 positions.append(pos)  # this is terrible for performance
         return np.array(positions)  # .astype(np.float32)
