@@ -8,8 +8,8 @@ SAMPLE_DISTANCE = 16
 SENSOR_MAX_DEPTH = 4.
 SENSOR_PIXEL_HEIGHT = 480
 SENSOR_PIXEL_WIDTH = 640
-SENSOR_ANGULAR_WIDTH = math.radians(57.);
-SENSOR_ANGULAR_HEIGHT = math.radians(43.)
+SENSOR_ANGULAR_WIDTH = math.radians(58.5);
+SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
 SENSOR_ANGULAR_ELEVATION = math.radians(0.)
 
 
@@ -20,17 +20,22 @@ class KinGeo:
 
     Supports a single Kinect in use
     """
-    kinect_initialized = False
+    ctx = False
 
     def __init__(self):
+
+        if not KinGeo.ctx:
+            KinGeo.ctx = fn.init()
+
+        self.ctx = fn.init()
+        # self.device = fn.open_device(KinGeo.ctx, 1)
+        # assert self.device is not None
         self.last_access = 0.  # time of last kinect depth map access
         self._frame_time = 1./30.  # float of min time in seconds per frame
         self._depth_arr = None  # holds numpy array of
         self._pc_timestamp = 0.
 
-        if not KinGeo.kinect_initialized:
-            fn.init()
-            KinGeo.kinect_initialized = True
+        # fn.set_depth_mode(self.device, 0, 5)
 
     @property
     def t_since_last_frame(self):
@@ -65,6 +70,8 @@ class KinGeo:
         """
         if self.t_since_last_frame > self._frame_time:
             self._depth_arr = fn.sync_get_depth()
+            if not self._depth_arr:
+                raise OSError('Could not connect to Kinect')
         return self._depth_arr[0]  # gets depth map from first Kinect found
 
     @property
@@ -79,18 +86,21 @@ class KinGeo:
         half_px_height = SENSOR_PIXEL_HEIGHT / 2
         for x in range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE):
             for y in range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE):
-                depth = float(dm[y][x]) / 2048. * SENSOR_MAX_DEPTH
+                depth = float(dm[y][x])
+                # depth = float(dm[y][x]) / 2048. * SENSOR_MAX_DEPTH
                 if depth == 2047:
                     continue  # if depth is max value, ignore it.
                 angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
-                    SENSOR_ANGULAR_WIDTH
+                    SENSOR_ANGULAR_WIDTH * 2
                 angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
-                    SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
+                    SENSOR_ANGULAR_HEIGHT * 2 + SENSOR_ANGULAR_ELEVATION * 2
                 pos = np.array((
-                    math.sin(angularX) * depth,
+                    math.sin(angularX) * depth / 2048,
                     # math.cos(angularX) * math.cos(angularY) * depth,
-                    depth,
-                    - math.sin(angularY) * depth,
+                    (depth ** 3 / 393216) / 2048,
+                    # 393216
+                    # 524288
+                    - math.sin(angularY) * depth / 2048,
                 )).astype(np.float32)
                 positions.append(pos)  # this is terrible for performance
         return np.array(positions)  # .astype(np.float32)

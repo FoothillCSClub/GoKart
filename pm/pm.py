@@ -40,9 +40,12 @@ class Display:
             app.run()
 
     def update_data(self):
-        self.pos = self._data_getter()
-        self.scatter.set_data(  # set scatter data to generated points
-            self.pos, edge_color=None, face_color=(1, 1, 0.9, .5), size=5)
+        try:
+            self.pos = self._data_getter()
+            self.scatter.set_data(  # set scatter data to generated points
+                self.pos, edge_color=None, face_color=(1, 1, 0.9, .5), size=5)
+        except AssertionError:
+            print('bad data update')
 
     @property
     def live_data_getter(self):
