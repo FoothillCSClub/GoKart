@@ -79,7 +79,7 @@ class KinGeo:
         half_px_height = SENSOR_PIXEL_HEIGHT / 2
         for x in range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE):
             for y in range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE):
-                depth = float(dm[0][y]) / 2048. * SENSOR_MAX_DEPTH
+                depth = float(dm[y][x]) / 2048. * SENSOR_MAX_DEPTH
                 if depth == 2047:
                     continue  # if depth is max value, ignore it.
                 angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
@@ -88,8 +88,9 @@ class KinGeo:
                     SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
                 pos = np.array((
                     math.sin(angularX) * depth,
-                    math.sin(angularY) * depth,
-                    math.cos(angularX) * math.cos(angularY) * depth
+                    # math.cos(angularX) * math.cos(angularY) * depth,
+                    depth,
+                    - math.sin(angularY) * depth,
                 )).astype(np.float32)
                 positions.append(pos)  # this is terrible for performance
         return np.array(positions)  # .astype(np.float32)
