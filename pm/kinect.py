@@ -1,6 +1,7 @@
 import freenect as fn
 import time as t
 import math
+import itertools as itr
 import numpy as np
 
 SAMPLE_DISTANCE = 10
@@ -21,8 +22,12 @@ class KinGeo:
     Supports a single Kinect in use
     """
     ctx = False
+    default_max_frq = 30  # max frq at which frames will be retrieved
 
     def __init__(self):
+        """
+        Initializes Kinect handler
+        """
 
         if not KinGeo.ctx:
             KinGeo.ctx = fn.init()
@@ -31,7 +36,7 @@ class KinGeo:
         # self.device = fn.open_device(KinGeo.ctx, 1)
         # assert self.device is not None
         self.last_access = 0.  # time of last kinect depth map access
-        self._frame_time = 1./30.  # float of min time in seconds per frame
+        self._frame_time = 1./KinGeo.default_max_frq  # min time in s per frame
         self._depth_arr = None  # holds numpy array of
         self._pc_timestamp = 0.
 
@@ -68,11 +73,16 @@ class KinGeo:
         Gets depth map as numpy array.
         :return: np.Array
         """
+        # If elapsed time since last frame is greater than frame
+        # rate, update depth map.
         if self.t_since_last_frame > self._frame_time:
+            # get depth map from first Kinect found
             self._depth_arr = fn.sync_get_depth()
             if not self._depth_arr:
                 raise OSError('Could not connect to Kinect')
-        return self._depth_arr[0]  # gets depth map from first Kinect found
+        # Return the depth-map portion of the depth map array.
+        # The second part of the array is the timestamp.
+        return self._depth_arr[0]
 
     @property
     def points_arr(self):
@@ -80,32 +90,39 @@ class KinGeo:
         Gets point cloud of positions from depth map
         :return: np.Array
         """
+        # TODO: make this method more efficient
+        # This should be looked at once the coordinates are
+        # accurately generated.
         dm = self.depth_map
-        positions = []
+        positions = []  # list storing found positions (not very efficient)
         half_px_width = SENSOR_PIXEL_WIDTH / 2
         half_px_height = SENSOR_PIXEL_HEIGHT / 2
-        for x in range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE):
-            for y in range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE):
-                depth = float(dm[y][x])
-                # depth = float(dm[y][x]) / 2048. * SENSOR_MAX_DEPTH
-                if depth == 2047:
-                    continue  # if depth is max value, ignore it.
-                angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
-                    SENSOR_ANGULAR_WIDTH
-                angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
-                    SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
-                depth_from_cam = depth + 819.
-                pos = np.array((
-                    # math.tan(angularX) * depth_from_cam / 2048,
-                    angularX,
-                    # math.cos(angularXs) * math.cos(angularY) * depth,
-                    0.1236 * math.tan(depth / 2842.5 + 1.1863),
-                    # 393216
-                    # 524288
-                    # - math.tan(angularY) * depth_from_cam / 2048,
-                    -angularY
-                )).astype(np.float32)
-                positions.append(pos)  # this is terrible for performance
+        # for each all combinations of x and y...
+        x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
+        y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
+        for x, y in itr.product(x_range, y_range):
+            # create a point in the newly formed point-cloud.
+            depth = float(dm[y][x])
+            if depth == 2047:
+                continue  # if depth is max value, ignore it.
+            angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
+                SENSOR_ANGULAR_WIDTH
+            angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
+                SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
+            depth_from_cam = depth + 819.
+            # TODO: fix x, y, z coordinate algorithms
+            # currently, x and z values are spurious
+            pos = np.array((
+                math.sin(angularX) * depth_from_cam / 2048,
+                # angularX,
+                # math.cos(angularXs) * math.cos(angularY) * depth,
+                0.1236 * math.tan(depth / 2842.5 + 1.1863),
+                # 393216
+                # 524288
+                - math.sin(angularY) * depth_from_cam / 2048,
+                # -angularY
+            )).astype(np.float32)
+            positions.append(pos)  # this is terrible for performance
         return np.array(positions)  # .astype(np.float32)
 
 if __name__ == '__main__':
