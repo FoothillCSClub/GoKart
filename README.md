@@ -14,3 +14,4 @@ This project was designed to:
 * Cython
 * freenect
 * vispy (for visualization of data)
+* PyQt5 (for visualization: used by VisPy)
