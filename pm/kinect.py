@@ -87,14 +87,19 @@ class KinGeo:
     @property
     def points_arr(self):
         """
-        Gets point cloud of positions from depth map
+        Gets point cloud of positions from depth map.
+        Returns point cloud as three dimensional array of
+        [column][row][point position]
         :return: np.Array
         """
         # TODO: make this method more efficient
         # This should be looked at once the coordinates are
         # accurately generated.
         dm = self.depth_map
-        positions = []  # list storing found positions (not very efficient)
+        cloud_height, cloud_width = (int(dim_size / SAMPLE_DISTANCE) + 1
+            for dim_size in (SENSOR_PIXEL_HEIGHT, SENSOR_PIXEL_WIDTH))
+        # make array that point positions will be stored in
+        points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
         half_px_width = SENSOR_PIXEL_WIDTH / 2
         half_px_height = SENSOR_PIXEL_HEIGHT / 2
         # for each all combinations of x and y...
@@ -104,7 +109,9 @@ class KinGeo:
             # create a point in the newly formed point-cloud.
             depth = float(dm[y][x])
             if depth == 2047:
-                continue  # if depth is max value, ignore it.
+                # if depth is max value, set marker value and go on
+                points[y][x] = (0, 0, 0)
+                continue
             angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
                 SENSOR_ANGULAR_WIDTH
             angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
@@ -122,13 +129,13 @@ class KinGeo:
                 - math.sin(angularY) * depth_from_cam / 2048,
                 # -angularY
             )).astype(np.float32)
-            positions.append(pos)  # this is terrible for performance
-        return np.array(positions)  # .astype(np.float32)
+            points[y][x] = pos
+        return points
 
 if __name__ == '__main__':
     kin_geo = KinGeo()  # create kinect handler obj
-    dm = kin_geo.depth_map
-    print(len(dm))
-    print(len(dm[0]))
-    print(len(dm[0][0]))
-    print(dm[1])
+    test_dm = kin_geo.depth_map
+    print(len(test_dm))
+    print(len(test_dm[0]))
+    print(len(test_dm[0][0]))
+    print(test_dm[1])

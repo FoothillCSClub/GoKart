@@ -1,10 +1,12 @@
 """
-
+Module holding classes for displaying point-cloud information
 """
+
+import sys
 import numpy as np
 import vispy.scene as scene
 import vispy.app as app
-import PyQt5  # used by vispy.app, the import here is used as a marker
+import PyQt5  # used by vispy.app, the import here is used as a marker.
 
 from vispy.scene import visuals
 
@@ -25,6 +27,8 @@ class Display:
         self.canvas = PointMapCanvas(keys='interactive', show=True)
         self._data_getter = data_getter_func
         self.view = self.canvas.central_widget.add_view()
+        # visuals constructs visual classes at run-time.
+        # Markers class is defined then.
         self.scatter = visuals.Markers()  # not an error
         self.update_data()
         self.view.add(self.scatter)
@@ -35,7 +39,6 @@ class Display:
             self.canvas.draw_func = self.update_data
 
     def run(self):
-        import sys
         if sys.flags.interactive != 1:
             app.run()
 
