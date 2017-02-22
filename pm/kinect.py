@@ -96,13 +96,13 @@ class KinGeo:
         # This should be looked at once the coordinates are
         # accurately generated.
         dm = self.depth_map
-        cloud_height, cloud_width = (int(dim_size / SAMPLE_DISTANCE) + 1
-            for dim_size in (SENSOR_PIXEL_HEIGHT, SENSOR_PIXEL_WIDTH))
+        cloud_height = int(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE) + 1
+        cloud_width = int(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE) + 1
         # make array that point positions will be stored in
         points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
         half_px_width = SENSOR_PIXEL_WIDTH / 2
         half_px_height = SENSOR_PIXEL_HEIGHT / 2
-        # for each all combinations of x and y...
+        # for all combinations of x and y...
         x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
         y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
         for x, y in itr.product(x_range, y_range):
@@ -112,21 +112,21 @@ class KinGeo:
                 # if depth is max value, set marker value and go on
                 points[y][x] = (0, 0, 0)
                 continue
-            angularX = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
+            angular_x = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
                 SENSOR_ANGULAR_WIDTH
-            angularY = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
+            angular_y = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
                 SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
             depth_from_cam = depth + 819.
             # TODO: fix x, y, z coordinate algorithms
             # currently, x and z values are spurious
             pos = np.array((
-                math.sin(angularX) * depth_from_cam / 2048,
+                math.sin(angular_x) * depth_from_cam / 2048,
                 # angularX,
                 # math.cos(angularXs) * math.cos(angularY) * depth,
                 0.1236 * math.tan(depth / 2842.5 + 1.1863),
                 # 393216
                 # 524288
-                - math.sin(angularY) * depth_from_cam / 2048,
+                - math.sin(angular_y) * depth_from_cam / 2048,
                 # -angularY
             )).astype(np.float32)
             points[y][x] = pos
