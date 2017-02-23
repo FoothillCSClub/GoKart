@@ -9,8 +9,8 @@ SAMPLE_DISTANCE = 10
 SENSOR_MAX_DEPTH = 4.
 SENSOR_PIXEL_HEIGHT = 480
 SENSOR_PIXEL_WIDTH = 640
-SENSOR_ANGULAR_WIDTH = math.radians(58.5) * 2;
-SENSOR_ANGULAR_HEIGHT = math.radians(46.6) * 2
+SENSOR_ANGULAR_WIDTH = math.radians(58.5);
+SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
 SENSOR_ANGULAR_ELEVATION = math.radians(0.)
 
 MAX_SLOPE = math.radians(20.)
@@ -40,7 +40,6 @@ class KinGeo:
         self.last_access = 0.  # time of last kinect depth map access
         self._frame_time = 1./KinGeo.default_max_frq  # min time in s per frame
         self._depth_arr = None  # holds numpy array of
-        self._points_arr = None
         self._pc_timestamp = 0.
         self._points_arr_timestamp = 0.
 
@@ -95,8 +94,8 @@ class KinGeo:
         :return: np.Array
         """
         dm = self.depth_map  # get depth map (a 2d numpy array)
-        cloud_height = int(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE) + 1
-        cloud_width = int(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE) + 1
+        cloud_height = math.ceil(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE)
+        cloud_width = math.ceil(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE)
         # make array that point positions will be stored in
         points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
         half_px_width = SENSOR_PIXEL_WIDTH / 2
@@ -107,25 +106,25 @@ class KinGeo:
         for x, y in itr.product(x_range, y_range):
             # create a point in the newly formed point-cloud.
             depth = float(dm[y][x])
+            arr_x_index = int(x / SAMPLE_DISTANCE)
+            arr_y_index = int(y / SAMPLE_DISTANCE)
             if depth == 2047:
                 # if depth is max value, set marker value and go on
-                points[y][x] = (0, 0, 0)
+                points[arr_y_index][arr_x_index] = (0, 0, 0)
                 continue
             angular_x = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
                 SENSOR_ANGULAR_WIDTH
             angular_y = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
                 SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
-            depth_from_cam = depth + 819.
             # TODO: fix x, y, z coordinate algorithms
             # currently, x and z values are spurious
+            depth = 0.1236 * math.tan(depth / 2842.5 + 1.1863)
             pos = np.array((
-                math.sin(angular_x) * depth_from_cam / 2048,
-                0.1236 * math.tan(depth / 2842.5 + 1.1863),
-                # invert y because y positions in depth map are ordered
-                # top->bottom but spatially, height increases bottom->top
-                - math.sin(angular_y) * depth_from_cam / 2048,
+                math.sin(angular_x) * depth,
+                depth,
+                -math.sin(angular_y) * depth,
             )).astype(np.float32)
-            points[y][x] = pos
+            points[arr_y_index][arr_x_index] = pos
         return points
 
     @property
