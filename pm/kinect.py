@@ -13,6 +13,8 @@ SENSOR_ANGULAR_WIDTH = math.radians(58.5) * 2;
 SENSOR_ANGULAR_HEIGHT = math.radians(46.6) * 2
 SENSOR_ANGULAR_ELEVATION = math.radians(0.)
 
+MAX_SLOPE = math.radians(20.)
+
 
 class KinGeo:
     """
@@ -38,9 +40,9 @@ class KinGeo:
         self.last_access = 0.  # time of last kinect depth map access
         self._frame_time = 1./KinGeo.default_max_frq  # min time in s per frame
         self._depth_arr = None  # holds numpy array of
+        self._points_arr = None
         self._pc_timestamp = 0.
-
-        # fn.set_depth_mode(self.device, 0, 5)
+        self._points_arr_timestamp = 0.
 
     @property
     def t_since_last_frame(self):
@@ -92,10 +94,7 @@ class KinGeo:
         [column][row][point position]
         :return: np.Array
         """
-        # TODO: make this method more efficient
-        # This should be looked at once the coordinates are
-        # accurately generated.
-        dm = self.depth_map
+        dm = self.depth_map  # get depth map (a 2d numpy array)
         cloud_height = int(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE) + 1
         cloud_width = int(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE) + 1
         # make array that point positions will be stored in
@@ -121,16 +120,47 @@ class KinGeo:
             # currently, x and z values are spurious
             pos = np.array((
                 math.sin(angular_x) * depth_from_cam / 2048,
-                # angularX,
-                # math.cos(angularXs) * math.cos(angularY) * depth,
                 0.1236 * math.tan(depth / 2842.5 + 1.1863),
-                # 393216
-                # 524288
+                # invert y because y positions in depth map are ordered
+                # top->bottom but spatially, height increases bottom->top
                 - math.sin(angular_y) * depth_from_cam / 2048,
-                # -angularY
             )).astype(np.float32)
             points[y][x] = pos
         return points
+
+    @property
+    def traversable_points(self):
+        """
+        Returns array of booleans indicating whether the point at the
+        same position in point_arr is able to be traversed
+        At the moment, simply tests the angle of the slope between
+        one point and the next in the column, and if the slope is
+        greater than maximum value set in constant, sets that position
+        to false in the array.
+        Points in point_arr that are empty should not be accessed,
+        and therefor do not have a value set.
+        :return: np.array(boolean)
+        """
+        points = self.points_arr
+        bools = np.ndarray(points.shape[0], points.shape[1])  # make bool array
+        x_range = range(1, points.shape[1])
+        y_range = range(1, points.shape[0])
+        for x, y in itr.product(x_range, y_range):  # for each x, y combo
+            if slope(points[y][x], points[y - 1][x]) > MAX_SLOPE or \
+                    slope(points[y][x], points[y][x - 1]) > MAX_SLOPE:
+                bools[x][y]
+
+
+def slope(p1, p2):
+    """
+    Gets slope from p1 to p2 as a 2d vector based on height (z)
+    position as radian
+    :param p1: np.array len 3
+    :param p2: np.array len 3
+    :return: float (radians)
+    """
+
+
 
 if __name__ == '__main__':
     kin_geo = KinGeo()  # create kinect handler obj
