@@ -87,7 +87,7 @@ int pca9685_set_freq(struct pca9685 *pca, unsigned freq) {
 	int32_t mode1;
 
 	// frequency cannot be set while chip is active.
-	if ((mode1 = i2c_smbus_read_byte_data(pca->fd, MODE1_ADDR)))
+	if ((mode1 = i2c_smbus_read_byte_data(pca->fd, MODE1_ADDR)) < 0)
 		return -1;
 	if (mode1 & MODE1_SLEEP) {
 		errno = EINVAL;
