@@ -29,9 +29,9 @@ class Display:
         self.view = self.canvas.central_widget.add_view()
         # visuals constructs visual classes at run-time.
         # Markers class is defined then.
-        self.scatter = visuals.Markers()  # not an error
+        self.points = visuals.Markers(parent=self.view.scene)  # not an error
         self.update_data()
-        self.view.add(self.scatter)
+        self.view.add(self.points)
         self.view.camera = 'turntable'
         self.axis = visuals.XYZAxis(parent=self.view.scene)  # not an error
 
@@ -43,12 +43,13 @@ class Display:
             app.run()
 
     def update_data(self):
-        try:
+        # try:
             self.pos = self._data_getter()
-            self.scatter.set_data(  # set scatter data to generated points
+            self.points.set_data(  # set points data to generated points
                 self.pos, edge_color=None, face_color=(1, 1, 0.9, .5), size=5)
-        except AssertionError:
-            print('bad data update')
+        # except AssertionError:
+        #    print('bad data update')
+
 
     @property
     def live_data_getter(self):
