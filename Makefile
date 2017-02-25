@@ -3,6 +3,7 @@ DEBUG ?=
 LDFLAGS ?=
 override LDFLAGS += -lm
 CFLAGS ?=
+override CFLAGS += $(DEBUG)
 
 LIBDIR ?= $(CURDIR)
 INCDIR ?=
