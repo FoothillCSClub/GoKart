@@ -76,7 +76,9 @@ int pca9685_activate(struct pca9685 *pca, unsigned freq) {
 
 	// the datasheet says we have to wait 500us after flipping off the sleep bit
 	while (timer.tv_nsec > 0)
-		if (nanosleep(&timer, &timer) && errno != EINTR)
+		if (nanosleep(&timer, &timer) == 0)
+			break;
+		else if (errno != EINTR)
 			return -1;
 
 	return 0;
