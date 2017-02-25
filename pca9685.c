@@ -134,7 +134,7 @@ int pca9685_set_duty_cycle(struct pca9685 *pca, uint8_t channel, double dc) {
 	} else {
 		on_lsb = 0x00;
 		on_msb = 0x00;
-		width_increments = round((PWM_INCREMENTS-1) / dc);
+		width_increments = round((PWM_INCREMENTS-1) * dc);
 		off_lsb =  width_increments & 0x00ff;
 		off_msb = (width_increments & 0x0f00) >> 8;
 	}
@@ -143,7 +143,7 @@ int pca9685_set_duty_cycle(struct pca9685 *pca, uint8_t channel, double dc) {
 		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 0,  on_lsb) ||
 		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 1,  on_msb) ||
 		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 2, off_lsb) ||
-		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 3, off_lsb)
+		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 3, off_msb)
 	)
 		return -1;
 
