@@ -20,6 +20,7 @@
 #define MODE1_ADDR			0x00
 #define MODE1_SLEEP			0x10
 #define MODE1_ALLCALL			0x01
+#define MODE1_RESTART			0x80
 #define MODE2_ADDR			0x01
 #define MODE2_OCH			0x08
 #define CHAN_BASE_REG			0x06
@@ -62,7 +63,7 @@ int pca9685_activate(struct pca9685 *pca, unsigned freq) {
 	if ((mode2 = i2c_smbus_read_byte_data(pca->fd, MODE2_ADDR)) < 0)
 		return -1;
 
-	mode1 &= ~(MODE1_SLEEP | MODE1_ALLCALL);
+	mode1 &= ~(MODE1_RESTART | MODE1_SLEEP | MODE1_ALLCALL);
 	mode2 |= MODE2_OCH;
 
 	if (i2c_smbus_write_byte_data(pca->fd, MODE2_ADDR, mode2) < 0)
@@ -145,6 +146,21 @@ int pca9685_set_duty_cycle(struct pca9685 *pca, uint8_t channel, double dc) {
 		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 2, off_lsb) ||
 		i2c_smbus_write_byte_data(pca->fd, chan_base_addr + 3, off_msb)
 	)
+		return -1;
+
+	return 0;
+}
+
+int pca9685_shutdown(struct pca9685 *pca) {
+	int32_t mode1;
+
+	if ((mode1 = i2c_smbus_read_byte_data(pca->fd, MODE1_ADDR)) < 0)
+		return -1;
+
+	mode1 &= ~MODE1_RESTART;
+	mode1 |= MODE1_SLEEP;
+
+	if (i2c_smbus_write_byte_data(pca->fd, MODE1_ADDR, mode1) < 0)
 		return -1;
 
 	return 0;
