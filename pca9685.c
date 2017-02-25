@@ -69,7 +69,7 @@ int pca9685_activate(struct pca9685 *pca, unsigned freq) {
 	if (i2c_smbus_write_byte_data(pca->fd, MODE2_ADDR, mode2) < 0)
 		return -1;
 
-	if (pca9685_set_freq(pca, freq))
+	if (freq && pca9685_set_freq(pca, freq))
 		return -1;
 
 	if (i2c_smbus_write_byte_data(pca->fd, MODE1_ADDR, mode1) < 0)
