@@ -109,7 +109,7 @@ class KinGeo:
             depth = float(dm[y][x])
             if depth == 2047:
                 # if depth is max value, set marker value and go on
-                points[y][x] = (0, 0, 0)
+                points[y/SAMPLE_DISTANCE][x/SAMPLE_DISTANCE] = (0, 0, 0)
                 continue
             angular_x = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
                 SENSOR_ANGULAR_WIDTH
@@ -125,7 +125,7 @@ class KinGeo:
                 # top->bottom but spatially, height increases bottom->top
                 - math.sin(angular_y) * depth_from_cam / 2048,
             )).astype(np.float32)
-            points[y][x] = pos
+            points[y/SAMPLE_DISTANCE][x/SAMPLE_DISTANCE] = pos
         return points
 
     @property
