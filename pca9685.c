@@ -16,6 +16,7 @@
 
 #define NUM_CHAN			16
 #define PWM_INCREMENTS			4096
+#define INTERNAL_OSC_HZ			25000000
 
 #define MODE1_ADDR			0x00
 #define MODE1_SLEEP			0x10
@@ -51,7 +52,7 @@ struct pca9685 *pca9685_open(const char *dev, uint8_t bus_addr) {
 }
 
 int pca9685_activate(struct pca9685 *pca, unsigned freq) {
-	int32_t mode1, mode2;
+	int32_t mode1, mode2, prescale;
 	struct timespec timer = {
 		.tv_sec = 0,
 		.tv_nsec = 500000,
@@ -62,6 +63,12 @@ int pca9685_activate(struct pca9685 *pca, unsigned freq) {
 
 	if ((mode2 = i2c_smbus_read_byte_data(pca->fd, MODE2_ADDR)) < 0)
 		return -1;
+
+	if (!freq) {
+		if ((prescale = i2c_smbus_read_byte_data(pca->fd, PRESCALE_ADDR)) < 0)
+			return -1;
+		pca->freq = round(INTERNAL_OSC_HZ / (PWM_INCREMENTS * (double)prescale));
+	}
 
 	mode1 &= ~(MODE1_RESTART | MODE1_SLEEP | MODE1_ALLCALL);
 	mode2 |= MODE2_OCH;
@@ -97,7 +104,7 @@ int pca9685_set_freq(struct pca9685 *pca, unsigned freq) {
 		return -1;
 	}
 
-	prescale = (unsigned) round(25000000.0 / (4096.0 * (double) freq)) - 1;
+	prescale = (unsigned) round(INTERNAL_OSC_HZ / (PWM_INCREMENTS * (double) freq)) - 1;
 	if (prescale < PRESCALE_MIN || prescale > PRESCALE_MAX) {
 		errno = ERANGE;
 		return -1;
