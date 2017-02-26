@@ -16,6 +16,7 @@ def pca9685_open_errcheck(res, func, args):
 			str(args[0], encoding="UTF-8"),
 			strerror(get_errno())
 		))
+	return res
 
 pca9685_open = clib.pca9685_open
 pca9685_open.argtypes = [c_char_p, c_uint8]
@@ -43,15 +44,19 @@ pca9685_shutdown.argtypes = [c_pca9685_p]
 pca9685_shutdown.restype = c_int
 
 def pca9685_io_errcheck(res, func, args):
-	verb_map = {
-		pca9685_activate:		"activating",
-		pca9685_set_freq:		"setting the frequency of",
-		pca9685_set_duty_cycle:		"setting duty cycle on",
-		pca9685_set_pulse_width:	"setting pulse width on",
-		pca9685_shutdown:		"shutting down",
-	}
+	if func is pca9685_activate:
+		verb = "activating"
+	elif func is pca9685_set_freq:
+		verb = "setting the frequency of"
+	elif func is pca9685_set_duty_cycle:
+		verb = "setting duty cycle on"
+	elif func is pca9685_set_pulse_width:
+		verb = "setting pulse width on"
+	elif func is pca9685_shutdown:
+		verb = "shutting down"
+
 	if res != 0:
-		raise OSError("error %s PCA9685: %s" % (verb_map[func], strerror(get_errno())))
+		raise OSError("error %s PCA9685: %s" % (verb, strerror(get_errno())))
 
 pca9685_activate.errcheck = pca9685_io_errcheck
 pca9685_set_freq.errcheck = pca9685_io_errcheck
