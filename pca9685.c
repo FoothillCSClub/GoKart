@@ -43,6 +43,8 @@ struct pca9685 *pca9685_open(const char *dev, uint8_t bus_addr) {
 	if (ioctl(ret->fd, I2C_SLAVE, bus_addr) < 0)
 		goto fail;
 
+	ret->freq = 0;
+
 	return ret;
 
    fail:
@@ -159,6 +161,11 @@ int pca9685_set_duty_cycle(struct pca9685 *pca, uint8_t channel, double dc) {
 }
 
 int pca9685_set_pulse_width(struct pca9685 *pca, uint8_t channel, unsigned usecs) {
+	if (!pca->freq) {
+		errno = EBADE;
+		return -1;
+	}
+
 	return pca9685_set_duty_cycle(pca, channel, ((double) pca->freq * usecs) / 1000000.0);
 }
 
