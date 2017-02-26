@@ -158,6 +158,10 @@ int pca9685_set_duty_cycle(struct pca9685 *pca, uint8_t channel, double dc) {
 	return 0;
 }
 
+int pca9685_set_pulse_width(struct pca9685 *pca, uint8_t channel, unsigned usecs) {
+	return pca9685_set_duty_cycle(pca, channel, ((double) pca->freq * usecs) / 1000000.0);
+}
+
 int pca9685_shutdown(struct pca9685 *pca) {
 	int32_t mode1;
 
