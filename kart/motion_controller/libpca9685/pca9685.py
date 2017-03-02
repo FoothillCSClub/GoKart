@@ -93,8 +93,13 @@ class PwmChip:
 	def activate(self, frequency=0):
 		pca9685_activate(self.pca, frequency)
 
+	def get_freq(self):
+		return self.pca.contents.freq
+
 	def set_freq(self, frequency):
 		pca9685_set_freq(self.pca, frequency)
+
+	freq = property(fget=get_freq, fset=set_freq)
 
 	def get_channel(self, channel):
 		return PwmChannel(self, channel)

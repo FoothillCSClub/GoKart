@@ -31,6 +31,10 @@
 #define PRESCALE_MIN			0x03
 #define PRESCALE_MAX			0xff
 
+static inline unsigned prescale_to_freq(uint8_t prescale) {
+	return round(INTERNAL_OSC_HZ / (PWM_INCREMENTS * (double)(prescale + 1)));
+}
+
 struct pca9685 *pca9685_open(const char *dev, uint8_t bus_addr) {
 	struct pca9685 *ret;
 
@@ -69,7 +73,7 @@ int pca9685_activate(struct pca9685 *pca, unsigned freq) {
 	if (!freq) {
 		if ((prescale = i2c_smbus_read_byte_data(pca->fd, PRESCALE_ADDR)) < 0)
 			return -1;
-		pca->freq = round(INTERNAL_OSC_HZ / (PWM_INCREMENTS * (double)prescale));
+		pca->freq = prescale_to_freq(prescale);
 	}
 
 	mode1 &= ~(MODE1_RESTART | MODE1_SLEEP | MODE1_ALLCALL);
@@ -115,7 +119,7 @@ int pca9685_set_freq(struct pca9685 *pca, unsigned freq) {
 	if (i2c_smbus_write_byte_data(pca->fd, PRESCALE_ADDR, (uint8_t) prescale))
 		return -1;
 
-	pca->freq = freq;
+	pca->freq = prescale_to_freq(prescale);
 
 	return 0;
 }
