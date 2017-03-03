@@ -16,7 +16,7 @@
 
 #define NUM_CHAN			16
 #define PWM_INCREMENTS			4096
-#define INTERNAL_OSC_HZ			25000000
+#define INTERNAL_OSC_HZ			28672000
 
 #define MODE1_ADDR			0x00
 #define MODE1_SLEEP			0x10
