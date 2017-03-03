@@ -1,3 +1,7 @@
+"""
+Module wrapping C code which handles use of the pca9685 chip.
+Allows setting of channel pulse width, frequency, and duty cycle
+"""
 
 from ctypes import *
 from os import strerror
