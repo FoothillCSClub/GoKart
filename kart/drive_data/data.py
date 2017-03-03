@@ -7,8 +7,6 @@ from time import time  # used to track run time
 import kart.drive_data.limits as limits
 import kart.drive_data.constants as constants
 
-from .map import Map
-
 
 class DriveData:
     """
@@ -16,7 +14,6 @@ class DriveData:
     packages.
     """
     def __init__(self):
-        self.map = Map()
         self.start_time = time()
         # todo
 
