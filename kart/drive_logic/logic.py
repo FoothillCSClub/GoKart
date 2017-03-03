@@ -53,12 +53,28 @@ class SimpleTestLogic(Logic):
     @property
     def target_speed(self) -> float:
         """
-        if run time is less than 5
-        :return:
+        If run time is less than 5, turns wheels left
+        If run time is from 5-10, turns wheels right
+        from 15-20 seconds run time, moves forward at low rate of speed
+        :return: float
         """
+        if 15 < self._data.run_time < 20:
+            return 0.1
+        else:
+            return 0
 
     @property
-    def 
+    def target_turn_radius(self) -> float:
+        """
+        If run time is between 10 and 15, move forward -slowly-
+        :return: float
+        """
+        if 0 < self._data.run_time < 5:
+            return -5
+        if 5 < self._data.run_time < 10:
+            return 5
+        else:
+            return 0
 
 
 class StaticWheelTurnLogic(Logic):
@@ -67,9 +83,23 @@ class StaticWheelTurnLogic(Logic):
     works correctly) move the kart, but simply test that the
     steering system is able to turn the wheels.
 
-    Test Should be completed within 10 seconds.
+    Test Should be completed within 10 seconds, not including
+    time taken to reset wheels to center position
     """
 
     @property
     def target_speed(self) -> float:
-        return 0.
+        return 0
+
+    @property
+    def target_turn_radius(self) -> float:
+        """
+        If run time is between 10 and 15, move forward -slowly-
+        :return: float
+        """
+        if 0 < self._data.run_time < 5:
+            return -5
+        if 5 < self._data.run_time < 10:
+            return 5
+        else:
+            return 0

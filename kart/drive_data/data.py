@@ -2,7 +2,7 @@
 Module holding data objects for kart program.
 """
 
-from time import time
+from time import time  # used to track run time
 
 import kart.drive_data.limits as limits
 import kart.drive_data.constants as constants
@@ -26,5 +26,15 @@ class DriveData:
         return limits
 
     @property
-    def constants(self):
+    def constants(self) -> object:
         return constants
+
+    @property
+    def run_time(self) -> float:
+        """
+        Gets time since run began in seconds.
+
+        Getter only. Can not be set.
+        :return: float
+        """
+        return time() - self.start_time
