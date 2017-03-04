@@ -43,13 +43,9 @@ class Display:
             app.run()
 
     def update_data(self):
-        # try:
-            self.pos = self._data_getter()
-            self.points.set_data(  # set points data to generated points
-                self.pos, edge_color=None, face_color=(1, 1, 0.9, .5), size=5)
-        # except AssertionError:
-        #    print('bad data update')
-
+        self.pos = self._data_getter()
+        self.points.set_data(  # set points data to generated points
+            self.pos, edge_color=None, face_color=(1, 1, 0.9, .5), size=5)
 
     @property
     def live_data_getter(self):

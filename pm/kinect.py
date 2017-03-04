@@ -9,11 +9,16 @@ SAMPLE_DISTANCE = 10
 SENSOR_MAX_DEPTH = 4.
 SENSOR_PIXEL_HEIGHT = 480
 SENSOR_PIXEL_WIDTH = 640
+HALF_SENSOR_PX_HEIGHT = SENSOR_PIXEL_HEIGHT / 2
+HALF_SENSOR_PX_WIDTH = SENSOR_PIXEL_WIDTH / 2
 SENSOR_ANGULAR_WIDTH = math.radians(58.5);
 SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
 SENSOR_ANGULAR_ELEVATION = math.radians(0.)
+POINT_CLOUD_UNITS_TO_METERS = 8.09
+BLUR_RADIUS = 2
 
 MAX_SLOPE = math.radians(20.)
+SLOPE_COMPARISON_VAL = np.tan(MAX_SLOPE) ** 2
 
 
 class KinGeo:
@@ -98,33 +103,20 @@ class KinGeo:
         cloud_width = math.ceil(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE)
         # make array that point positions will be stored in
         points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
-        half_px_width = SENSOR_PIXEL_WIDTH / 2
-        half_px_height = SENSOR_PIXEL_HEIGHT / 2
         # for all combinations of x and y...
         x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
         y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
         for x, y in itr.product(x_range, y_range):
             # create a point in the newly formed point-cloud.
-            depth = float(dm[y][x])
+            map_depth = dm[y][x]
             arr_x_index = int(x / SAMPLE_DISTANCE)
             arr_y_index = int(y / SAMPLE_DISTANCE)
-            if depth == 2047:
+            if map_depth == 2047:
                 # if depth is max value, set marker value and go on
                 points[arr_y_index][arr_x_index] = (0, 0, 0)
                 continue
-            angular_x = (x - half_px_width) / SENSOR_PIXEL_WIDTH * \
-                SENSOR_ANGULAR_WIDTH
-            angular_y = (y - half_px_height) / SENSOR_PIXEL_HEIGHT * \
-                SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
-            # TODO: fix x, y, z coordinate algorithms
-            # currently, x and z values are spurious
-            depth = 0.1236 * math.tan(depth / 2842.5 + 1.1863)
-            pos = np.array((
-                math.sin(angular_x) * depth,
-                depth,
-                -math.sin(angular_y) * depth,
-            )).astype(np.float32)
-            points[arr_y_index][arr_x_index] = pos
+            points[arr_y_index][arr_x_index] = \
+                pos_from_depth_map_point(x, y, map_depth)
         return points
 
     @property
@@ -145,12 +137,45 @@ class KinGeo:
         x_range = range(1, points.shape[1])
         y_range = range(1, points.shape[0])
         for x, y in itr.product(x_range, y_range):  # for each x, y combo
-            if slope(points[y][x], points[y - 1][x]) > MAX_SLOPE or \
-                    slope(points[y][x], points[y][x - 1]) > MAX_SLOPE:
-                bools[x][y]
+            bools[x][y] = \
+                slope_in_bounds(points[y][x], points[y - 1][x]) and \
+                slope_in_bounds(points[y][x], points[y][x - 1])
+        return bools
 
 
-def slope(p1, p2):
+def blurred_depth(depth_map, radius, x, y) -> float:
+    x_range = range(x - radius, x + radius)
+    y_range = range(y - radius, y + radius)
+    blur_positions = [(x, y) for x, y in itr.product(x_range, y_range)]
+    depth_sum = 0.
+    n_depths_summed = 0
+    for position in blur_positions:
+        x, y = position
+        if 0 <= x < SENSOR_PIXEL_WIDTH and 0 <= y < SENSOR_PIXEL_HEIGHT:
+            depth_at_pos = depth_map[y][x]
+            if depth_at_pos != 2047:
+                depth_sum += depth_at_pos
+                n_depths_summed += 1
+    average_depth = depth_sum / n_depths_summed if n_depths_summed else 2047
+    return average_depth
+
+
+def pos_from_depth_map_point(x, y, map_depth):
+    angular_x = (x - HALF_SENSOR_PX_WIDTH) / SENSOR_PIXEL_WIDTH * \
+        SENSOR_ANGULAR_WIDTH
+    angular_y = (y - HALF_SENSOR_PX_HEIGHT) / SENSOR_PIXEL_HEIGHT * \
+        SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
+    # 0.1236
+    depth = np.tan(map_depth / 2842.5 + 1.1863)  # ????
+    pos = (
+        math.sin(angular_x) * depth,
+        depth,
+        -math.sin(angular_y) * depth,
+    )
+    return pos
+
+
+def slope_in_bounds(p1, p2):
     """
     Gets slope from p1 to p2 as a 2d vector based on height (z)
     position as radian
@@ -158,8 +183,11 @@ def slope(p1, p2):
     :param p2: np.array len 3
     :return: float (radians)
     """
-
-
+    dif = np.subtract(p1, p2)
+    flat_distance_sq = np.power(dif[0], 2), np.power(dif[2], 2)  # avoid sqrt
+    v_difference_sq = np.power(dif[1], 2)
+    slope_sq = v_difference_sq / flat_distance_sq
+    return slope_sq < SLOPE_COMPARISON_VAL
 
 if __name__ == '__main__':
     kin_geo = KinGeo()  # create kinect handler obj
