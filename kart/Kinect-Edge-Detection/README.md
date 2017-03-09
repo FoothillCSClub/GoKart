@@ -6,7 +6,7 @@ This project was designed to:
 
 * 2) Convert the depth map into a point cloud
 
-* 3) From the point cloud, find significant edges that bound geometry which would impede navigation for a self-navigating robot  
+* 3) From the point cloud, find significant geometry which would impede navigation for a self-navigating robot  
 
 ## Dependencies:
 

@@ -2,6 +2,11 @@
 
 ## Subfolders:
 
+* Kinect-Edge-Detection/: Sub-project; contains classes for getting 
+    information from and manipulating Kinect sensor.
+
+* hardware/: Contains classes for making use of hardware.
+
 * drive_data/: Package holding DriveData class and related classes.
     DriveData is updated with information by
 
