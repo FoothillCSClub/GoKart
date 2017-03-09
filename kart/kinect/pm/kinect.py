@@ -3,10 +3,14 @@ import time as t
 import math
 import itertools as itr
 import numpy as np
+import pyximport
+
+# build cython functions
+pyximport.install()
+from . import cyfunc
 
 SAMPLE_DISTANCE = 10
 
-SENSOR_MAX_DEPTH = 4.
 SENSOR_PIXEL_HEIGHT = 480
 SENSOR_PIXEL_WIDTH = 640
 HALF_SENSOR_PX_HEIGHT = SENSOR_PIXEL_HEIGHT / 2
@@ -137,43 +141,6 @@ class PointCloud:
     @property
     def time_stamp(self) -> int:
         return self.depth_arr[1]
-
-
-def point_arr_from_depth_arr(dm):
-    cloud_height = math.ceil(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE)
-    cloud_width = math.ceil(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE)
-    # make array that point positions will be stored in
-    points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
-    # for all combinations of x and y...
-    x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
-    y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
-    for x, y in itr.product(x_range, y_range):
-        # create a point in the newly formed point-cloud.
-        map_depth = dm[y][x]
-        arr_x_index = int(x / SAMPLE_DISTANCE)
-        arr_y_index = int(y / SAMPLE_DISTANCE)
-        if map_depth == 2047:
-            # if depth is max value, set marker value and go on
-            points[arr_y_index][arr_x_index] = (0, 0, 0)
-            continue
-        points[arr_y_index][arr_x_index] = \
-            pos_from_depth_map_point(x, y, map_depth)
-    return points
-
-
-def pos_from_depth_map_point(x, y, map_depth):
-    angular_x = (x - HALF_SENSOR_PX_WIDTH) / SENSOR_PIXEL_WIDTH * \
-        SENSOR_ANGULAR_WIDTH
-    angular_y = (y - HALF_SENSOR_PX_HEIGHT) / SENSOR_PIXEL_HEIGHT * \
-        SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
-    # 0.1236
-    depth = np.tan(map_depth / 2842.5 + 1.1863)
-    pos = (
-        math.sin(angular_x) * depth,
-        depth,
-        -math.sin(angular_y) * depth,
-    )
-    return pos
 
 
 def slope_in_bounds(p1, p2):
