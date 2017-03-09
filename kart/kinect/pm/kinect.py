@@ -1,7 +1,6 @@
 import freenect as fn
 import time as t
 import math
-import itertools as itr
 import numpy as np
 import pyximport
 
@@ -135,7 +134,8 @@ class PointCloud:
     @property
     def point_arr(self):
         if not self._point_arr:
-            self._point_arr = point_arr_from_depth_arr(self.depth_arr[0])
+            self._point_arr = \
+                cyfunc.point_arr_from_depth_arr(self.depth_arr[0])
         return self._point_arr
 
     @property

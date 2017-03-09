@@ -6,7 +6,7 @@ import kart.kinect.pm.kinect as kinect
 
 
 cdef:
-    int SAMPLE_DISTANCE = 10
+    int SAMPLE_DISTANCE = 8
     int SENSOR_PIXEL_HEIGHT = 480
     int SENSOR_PIXEL_WIDTH = 640
     int HALF_SENSOR_PX_HEIGHT = SENSOR_PIXEL_HEIGHT / 2
@@ -28,6 +28,7 @@ cpdef pos_from_depth_map_point(int x, int y, int map_depth):
         -math.sin(angular_y) * depth,
     )
     return pos
+
 
 def point_arr_from_depth_arr(dm):
     cdef int cloud_height = math.ceil(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE)
