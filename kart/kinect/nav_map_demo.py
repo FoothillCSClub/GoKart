@@ -4,8 +4,8 @@ navigable space.
 """
 import numpy as np
 
-from .pm.kinect import KinGeo
-from .pm.pm import Display
+from kart.kinect.pm.kinect import KinGeo
+from kart.kinect.pm.pm import Display
 
 
 if __name__ == '__main__':

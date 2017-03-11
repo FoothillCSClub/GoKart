@@ -4,8 +4,8 @@ Demo module
 import os
 import numpy as np
 
-from .pm.kinect import KinGeo
-from .pm.pm import Display
+from kart.kinect.pm.kinect import KinGeo
+from kart.kinect.pm.pm import Display
 
 
 class Demo:

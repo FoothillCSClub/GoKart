@@ -123,7 +123,7 @@ class Actuator(object):
         # TODO: wheel turn rate should also be reduced as the target angle is
         # approached so that the wheels are not subject to stutter
 
-        # if angle is outside bounds, throw error
+        # if angle is outside bounds, throw exception
         if not MIN_WHEEL_TURN_ANGLE < angle < MAX_WHEEL_TURN_ANGLE:
             raise ValueError(
                 'Actuator.turn_wheels: Passed angle {} was outside bounds '
