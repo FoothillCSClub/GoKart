@@ -147,14 +147,14 @@ cdef class CyPointCloud:
         for x, y in itr.product(x_range, y_range):
             # create a point in the newly formed point-cloud.
             # if point is already calculated, skip to next position
-            if point_array[y][x][1] != 0:
+            if self._point_arr[y][x][1] != 0:
                 continue
             map_depth = depth_array[y][x]
             arr_x_index = int(x / SAMPLE_DISTANCE)
             arr_y_index = int(y / SAMPLE_DISTANCE)
             if map_depth == 2047:
                 # if depth is max value, set marker value and go on
-                points[arr_y_index][arr_x_index] = (0, 0, 0)
+                self._point_arr[arr_y_index][arr_x_index] = (0, 0, 0)
                 continue
             self._point_arr[arr_y_index][arr_x_index] = \
                 pos_from_depth_map_point(x, y, map_depth)
@@ -166,11 +166,11 @@ cpdef pos_from_depth_map_point(int x, int y, int map_depth):
     cdef float angular_y = float(y - HALF_SENSOR_PX_HEIGHT) / SENSOR_PIXEL_HEIGHT *\
             SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
     cdef float depth = math.tan(map_depth / 2842.5 + 1.1863)
-    pos = (
+    pos = np.array((
         math.sin(angular_x) * depth,
         depth,
         -math.sin(angular_y) * depth,
-    )
+    ))
     return pos
 
 
