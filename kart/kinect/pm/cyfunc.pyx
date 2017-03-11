@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import itertools as itr
-import cmath
 import kart.kinect.pm.kinect as kinect
 
 
@@ -14,6 +13,8 @@ cdef:
     float SENSOR_ANGULAR_WIDTH = math.radians(58.5);
     float SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
     float SENSOR_ANGULAR_ELEVATION = math.radians(0.)
+    int CLOUD_WIDTH = math.ceil(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE)
+    int CLOUD_HEIGHT = math.ceil(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE)
 
 
 cpdef pos_from_depth_map_point(int x, int y, int map_depth):
@@ -31,10 +32,8 @@ cpdef pos_from_depth_map_point(int x, int y, int map_depth):
 
 
 def point_arr_from_depth_arr(dm):
-    cdef int cloud_height = math.ceil(SENSOR_PIXEL_HEIGHT / SAMPLE_DISTANCE)
-    cdef int cloud_width = math.ceil(SENSOR_PIXEL_WIDTH / SAMPLE_DISTANCE)
     # make array that point positions will be stored in
-    points = np.ndarray((cloud_height, cloud_width, 3), np.float32)
+    points = np.ndarray((CLOUD_HEIGHT, CLOUD_WIDTH, 3), np.float32)
     # for all combinations of x and y...
     x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
     y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
@@ -54,3 +53,29 @@ def point_arr_from_depth_arr(dm):
         points[arr_y_index][arr_x_index] = \
             pos_from_depth_map_point(x, y, map_depth)
     return points
+
+
+cpdef bool slope_in_bounds(p1, p2):
+    """
+    Gets slope from p1 to p2 as a 2d vector based on height (z)
+    position as radian
+    :param p1: np.array len 3
+    :param p2: np.array len 3
+    :return: float (radians)
+    """
+    dif = np.subtract(p1, p2)
+    cdef double flat_distance_sq, v_difference_sq, slope_sq
+    flat_distance_sq = np.power(dif[0], 2), np.power(dif[2], 2)
+    v_difference_sq = np.power(dif[1], 2)
+    slope_sq = v_difference_sq / flat_distance_sq
+    return slope_sq < SLOPE_COMPARISON_VAL
+
+
+def get_non_traversable_point_cloud(points_arr):
+    # while working from the bottom of the array up, once
+    # a column has had a non-traversible point found within it, it will
+    # be removed from active columns
+    active_col_indices = set(x for x in range(0, CLOUD_WIDTH))
+
+    for y in range(0, CLOUD_HEIGHT, -1):
+

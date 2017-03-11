@@ -1,22 +1,15 @@
 import freenect as fn
 import time as t
 import math
+import mathutils as mu
 import numpy as np
 import pyximport
+import typing as ty
 
 # build cython functions
 pyximport.install()
 from . import cyfunc
 
-SAMPLE_DISTANCE = 10
-
-SENSOR_PIXEL_HEIGHT = 480
-SENSOR_PIXEL_WIDTH = 640
-HALF_SENSOR_PX_HEIGHT = SENSOR_PIXEL_HEIGHT / 2
-HALF_SENSOR_PX_WIDTH = SENSOR_PIXEL_WIDTH / 2
-SENSOR_ANGULAR_WIDTH = math.radians(58.5);
-SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
-SENSOR_ANGULAR_ELEVATION = math.radians(0.)
 POINT_CLOUD_UNITS_TO_METERS = 8.09
 BLUR_RADIUS = 2
 
@@ -129,18 +122,68 @@ class DepthMap:
 class PointCloud:
     def __init__(self, depth_arr):
         self.depth_arr = depth_arr
-        self._point_arr = None
+        self._point_arr = np.ndarray(self.arr_height, self.arr_width, 3)
+
+    def __getitem__(self, position: ty.Tuple[int, int]):
+        """
+        Gets position of point at point-cloud position x, y
+        :param position: tuple[int x, int y]
+        :return: numpy.ndarray[3]
+        """
+        x, y = position
+        point = self._point_arr[y][x]
+        if point[1] == 0: # if distance is 0..
+            # a y position of 0 should never occur, because the sensor
+            # has a minimum detection distance.
+            point = self._point_arr[y][x] = \
+                cyfunc.pos_from_depth_map_point(x, y, self.depth_arr[0][y][x])
+        return
 
     @property
     def point_arr(self):
+        """
+        Gets complete point array from PointCloud.
+        This method will calculate the 3d position of every
+        position in the point array.
+        If only some points positions in the cloud are needed, it is
+        likely faster to access those points specifically using
+        __getitem__ (for example: point_cloud[x, y])
+        :return: numpy.ndarray
+        """
         if not self._point_arr:
-            self._point_arr = \
-                cyfunc.point_arr_from_depth_arr(self.depth_arr[0])
+            self._point_arr = cyfunc.fill_point_cloud(  # todo
+                    depth_array=self.depth_arr[0],
+                    point_array=self._point_arr if self._point_arr else None
+                )
         return self._point_arr
 
     @property
     def time_stamp(self) -> int:
+        """
+        gets time at which depth map used to generate this PointCloud
+        was captured.
+        :param self:
+        :return:
+        """
         return self.depth_arr[1]
+
+    @property
+    def arr_width(self):
+        """
+        Gets width in sampled pixels of point cloud.
+        This is the width of the PointCloud's point array.
+        :return: int
+        """
+        return cyfunc.CLOUD_WIDTH
+
+    @property
+    def arr_height(self):
+        """
+        Gets height in sampled pixels of point cloud.
+        This is the height of the PointCloud's point array.
+        :return: int
+        """
+        return cyfunc.CLOUD_HEIGHT
 
 
 def slope_in_bounds(p1, p2):
