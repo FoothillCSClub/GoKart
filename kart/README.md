@@ -2,13 +2,13 @@
 
 ## Subfolders:
 
-* Kinect-Edge-Detection/: Sub-project; contains classes for getting 
+* kinect/: Sub-project; contains classes for getting 
     information from and manipulating Kinect sensor.
 
 * hardware/: Contains classes for making use of hardware.
 
 * drive_data/: Package holding DriveData class and related classes.
-    DriveData is updated with information by
+    DriveData is updated with information by Input class at runtime
 
 * drive_logic/: Python Package storing DriveLogic and related
     classes. DriveLogic contains the methods that produce the target
@@ -27,8 +27,9 @@
     contained herein.
 
 * util/: Python package holding utility classes. These classes are
-    those that are passed around between other packages, such as 
-    Point, etc
+    those that are passed around between other packages
+    
+* const/: Package holding constants used throughout the program.
 
 * kart.py: Python module holding main GoKart class and main method.
     This class holds references to data, logic, input, and control
