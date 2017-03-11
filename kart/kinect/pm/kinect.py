@@ -1,10 +1,6 @@
 import freenect as fn
 import time as t
-import math
-import mathutils as mu
-import numpy as np
 import pyximport
-import typing as ty
 
 # build cython functions
 pyximport.install()
@@ -12,9 +8,6 @@ from . import cyfunc
 
 POINT_CLOUD_UNITS_TO_METERS = 8.09
 BLUR_RADIUS = 2
-
-MAX_SLOPE = math.radians(20.)
-SLOPE_COMPARISON_VAL = np.tan(MAX_SLOPE) ** 2
 
 
 class KinGeo:
@@ -119,78 +112,7 @@ class DepthMap:
         return self._point_cloud
 
 
-class PointCloud:
-    def __init__(self, depth_arr):
-        self.depth_arr = depth_arr
-        self._point_arr = np.ndarray((self.arr_height, self.arr_width, 3))
-
-    def __getitem__(self, position: ty.Tuple[int, int]):
-        """
-        Gets position of point at point-cloud position x, y
-        :param position: tuple[int x, int y]
-        :return: numpy.ndarray[3]
-        """
-        x, y = position
-        point = self._point_arr[y][x]
-        if point[1] == 0:  # if distance is 0..
-            # a y position of 0 should never occur in any calculated
-            # position, because the sensor has a minimum
-            # detection distance.
-            point = self._point_arr[y][x] = \
-                cyfunc.pos_from_depth_map_point(x, y, self.depth_arr[0][y][x])
-        return point
-
-    @property
-    def point_arr(self):
-        """
-        Gets complete point array from PointCloud.
-        This method will calculate the 3d position of every
-        position in the point array.
-        If only some points positions in the cloud are needed, it is
-        likely faster to access those points specifically using
-        __getitem__ (for example: point_cloud[x, y])
-        :return: numpy.ndarray
-        """
-        if not self._point_arr:
-            self._point_arr = cyfunc.fill_point_cloud(  # todo
-                    depth_array=self.depth_arr[0],
-                    point_array=self._point_arr if self._point_arr else None
-                )
-        return self._point_arr
-
-    @property
-    def time_stamp(self) -> int:
-        """
-        gets time at which depth map used to generate this PointCloud
-        was captured.
-        :param self:
-        :return:
-        """
-        return self.depth_arr[1]
-
-    @property
-    def arr_width(self):
-        """
-        Gets width in sampled pixels of point cloud.
-        This is the width of the PointCloud's point array.
-        :return: int
-        """
-        return cyfunc.CLOUD_WIDTH
-
-    @property
-    def arr_height(self):
-        """
-        Gets height in sampled pixels of point cloud.
-        This is the height of the PointCloud's point array.
-        :return: int
-        """
-        return cyfunc.CLOUD_HEIGHT
-
-    @property
-    def nearest_non_traversable_geometry_quadmap(self):
-        """
-        Gets quadmap of points that represent the nearest
-        non-traversable point for each column of points in PointCloud
-        :return: QuadMap
-        """
-        return cyfunc.get_nearest_non_traversible_points()
+class PointCloud(cyfunc.CyPointCloud):
+    """
+    Wrapper class that can be conveniently imported from anywhere
+    """
