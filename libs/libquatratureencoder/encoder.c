@@ -24,41 +24,6 @@
 #define GPIO_DIR_IN			"in"
 #define GPIO_DIR_OUT			"out"
 
-static size_t snarf_file(const char *file, char **out) {
-	FILE *fh;
-	char *ret = NULL, *tmp;
-	size_t i = 0, s = BUF_SIZE;
-
-	if (!(fh = fopen(file, "r")))
-		return -1;
-
-	while (s == BUF_SIZE) {
-		if (!(tmp = realloc(ret, i + BUF_SIZE)))
-			goto fail;
-		ret = tmp;
-
-		s = fread(ret + i, 1, BUF_SIZE, fh);
-		i += s;
-	}
-
-	if (ferror(fh))
-		goto fail;
-
-	fclose(fh);
-
-	*out = ret;
-
-	return i;
-
-   fail:
-	fclose(fh);
-
-	if (ret)
-		free(ret);
-
-	return -1;
-}
-
 static int stuff_file(const char *file, const char *string, size_t len) {
 	FILE *fh;
 	size_t s;
@@ -140,9 +105,7 @@ inline void subtract_timespecs(
 static void *read_loop(void *arg) {
 	struct encoder_ctx *ctx = arg;
 	struct pollfd pollfds[2];
-	sigset_t cur_mask;
 	int a = ctx->a_value, b = ctx->b_value, old_a, old_b, diff, dummy;
-	size_t tick = 0;
 	struct timespec start_sample, end_sample;
 
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &dummy);
@@ -207,6 +170,8 @@ static void *read_loop(void *arg) {
 		}
 		
 	}
+
+	return NULL; /* NOT REACHED */
 }
 
 int get_encoder_value(struct encoder_ctx *ctx, int *out) {
