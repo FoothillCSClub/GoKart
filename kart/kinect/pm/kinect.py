@@ -189,6 +189,8 @@ class PointCloud:
     @property
     def nearest_non_traversable_geometry_quadmap(self):
         """
-        g
-        :return:
+        Gets quadmap of points that represent the nearest
+        non-traversable point for each column of points in PointCloud
+        :return: QuadMap
         """
+        return cyfunc.get_nearest_non_traversible_points()
