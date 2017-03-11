@@ -31,9 +31,17 @@ cpdef pos_from_depth_map_point(int x, int y, int map_depth):
     return pos
 
 
-def point_arr_from_depth_arr(dm):
-    # make array that point positions will be stored in
-    points = np.ndarray((CLOUD_HEIGHT, CLOUD_WIDTH, 3), np.float32)
+def fill_point_cloud(depth_array, point_array=None):
+    """
+    Makes a point cloud array from passed depth array.
+    If point_array is None, creates a new array.
+    If passed a point_array, fills all empty positions.
+    :param depth_array: np.ndarray
+    :param point_array: np.ndarray
+    :return: np.ndarray
+    """
+    if point_array is None:
+        point_array = np.ndarray((CLOUD_WIDTH, CLOUD_HEIGHT, 3))
     # for all combinations of x and y...
     x_range = range(0, SENSOR_PIXEL_WIDTH, SAMPLE_DISTANCE)
     y_range = range(0, SENSOR_PIXEL_HEIGHT, SAMPLE_DISTANCE)
@@ -43,16 +51,19 @@ def point_arr_from_depth_arr(dm):
         int arr_y_index  # point array y position
     for x, y in itr.product(x_range, y_range):
         # create a point in the newly formed point-cloud.
-        map_depth = dm[y][x]
+        # if point is already calculated, skip to next position
+        if point_array[y][x][1] != 0:
+            continue
+        map_depth = depth_array[y][x]
         arr_x_index = int(x / SAMPLE_DISTANCE)
         arr_y_index = int(y / SAMPLE_DISTANCE)
         if map_depth == 2047:
             # if depth is max value, set marker value and go on
             points[arr_y_index][arr_x_index] = (0, 0, 0)
             continue
-        points[arr_y_index][arr_x_index] = \
+        point_array[arr_y_index][arr_x_index] = \
             pos_from_depth_map_point(x, y, map_depth)
-    return points
+    return point_array
 
 
 cpdef bool slope_in_bounds(p1, p2):

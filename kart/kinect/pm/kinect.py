@@ -122,7 +122,7 @@ class DepthMap:
 class PointCloud:
     def __init__(self, depth_arr):
         self.depth_arr = depth_arr
-        self._point_arr = np.ndarray(self.arr_height, self.arr_width, 3)
+        self._point_arr = np.ndarray((self.arr_height, self.arr_width, 3))
 
     def __getitem__(self, position: ty.Tuple[int, int]):
         """
@@ -132,12 +132,13 @@ class PointCloud:
         """
         x, y = position
         point = self._point_arr[y][x]
-        if point[1] == 0: # if distance is 0..
-            # a y position of 0 should never occur, because the sensor
-            # has a minimum detection distance.
+        if point[1] == 0:  # if distance is 0..
+            # a y position of 0 should never occur in any calculated
+            # position, because the sensor has a minimum
+            # detection distance.
             point = self._point_arr[y][x] = \
                 cyfunc.pos_from_depth_map_point(x, y, self.depth_arr[0][y][x])
-        return
+        return point
 
     @property
     def point_arr(self):
@@ -185,17 +186,9 @@ class PointCloud:
         """
         return cyfunc.CLOUD_HEIGHT
 
-
-def slope_in_bounds(p1, p2):
-    """
-    Gets slope from p1 to p2 as a 2d vector based on height (z)
-    position as radian
-    :param p1: np.array len 3
-    :param p2: np.array len 3
-    :return: float (radians)
-    """
-    dif = np.subtract(p1, p2)
-    flat_distance_sq = np.power(dif[0], 2), np.power(dif[2], 2)  # avoid sqrt
-    v_difference_sq = np.power(dif[1], 2)
-    slope_sq = v_difference_sq / flat_distance_sq
-    return slope_sq < SLOPE_COMPARISON_VAL
+    @property
+    def nearest_non_traversable_geometry_quadmap(self):
+        """
+        g
+        :return:
+        """
