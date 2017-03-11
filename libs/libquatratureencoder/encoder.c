@@ -174,7 +174,7 @@ static void *read_loop(void *arg) {
 	return NULL; /* NOT REACHED */
 }
 
-int get_encoder_value(struct encoder_ctx *ctx, int *enc_val, struct timespec *last_sampling) {
+int qenc_get_encoder_value(struct encoder_ctx *ctx, int *enc_val, struct timespec *last_sampling) {
 	int ret = 0;
 
 	if (pthread_mutex_lock(&ctx->lock))
@@ -196,7 +196,7 @@ int get_encoder_value(struct encoder_ctx *ctx, int *enc_val, struct timespec *la
 	return ret;
 }
 
-struct encoder_ctx *launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
+struct encoder_ctx *qenc_launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 	char gpio_a_filename[FILENAME_MAX+1];
 	char gpio_b_filename[FILENAME_MAX+1];
 	struct encoder_ctx *ctx;
@@ -253,7 +253,7 @@ struct encoder_ctx *launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 	return NULL;
 }
 
-int terminate_read_loop(struct encoder_ctx *ctx) {
+int qenc_terminate_read_loop(struct encoder_ctx *ctx) {
 	if (
 		pthread_cancel(ctx->thread) ||
 		pthread_join(ctx->thread, NULL) ||
