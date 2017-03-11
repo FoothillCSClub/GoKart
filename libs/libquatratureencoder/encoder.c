@@ -124,6 +124,19 @@ static inline int get_gpio_value(int valfd, int *out) {
 	return 0;
 }
 
+inline void subtract_timespecs(
+	const struct timespec *a,
+	const struct timespec *b,
+	struct timespec *res
+) {
+	res->tv_sec = a->tv_sec - b->tv_sec;
+	res->tv_nsec = a->tv_nsec - b->tv_nsec;
+	if (res->tv_nsec < 0) {
+		res->tv_nsec += 1000000000;
+		res->tv_sec -= 1;
+	}
+}
+
 static void *read_loop(void *arg) {
 	struct encoder_ctx *ctx = arg;
 	struct pollfd pollfds[2];
@@ -178,7 +191,7 @@ static void *read_loop(void *arg) {
 		ctx->value += diff;
 
 		clock_gettime(CLOCK_MONOTONIC, &end_sample);
-		substract_timespecs(&end_sample, &start_sample, &ctx->last_sampletime);
+		subtract_timespecs(&end_sample, &start_sample, &ctx->last_sampletime);
 
 		pthread_mutex_unlock(&ctx->lock);
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &dummy);
