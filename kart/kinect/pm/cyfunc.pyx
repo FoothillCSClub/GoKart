@@ -209,7 +209,7 @@ cdef bint slope_in_bounds(p1, p2):
         np.ndarray dif
         double flat_distance_sq, v_difference_sq, slope_sq
     dif = np.subtract(p1, p2)
-    flat_distance_sq = np.power(dif[0], 2), np.power(dif[2], 2)  # avoid sqrt
+    flat_distance_sq = np.power(dif[0], 2) + np.power(dif[2], 2)  # avoid sqrt
     v_difference_sq = np.power(dif[1], 2)
     slope_sq = v_difference_sq / flat_distance_sq
     return slope_sq < SLOPE_COMPARISON_VAL
