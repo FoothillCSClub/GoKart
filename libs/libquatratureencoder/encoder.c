@@ -62,7 +62,7 @@ static size_t snarf_file(const char *file, char **out) {
 static int stuff_file(const char *file, const char *string, size_t len) {
 	FILE *fh;
 	size_t s;
-	int ret;
+	int ret = 0;
 
 	if (!(fh = fopen(file, "w")))
 		return -1;
