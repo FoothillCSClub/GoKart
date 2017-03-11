@@ -1,27 +1,14 @@
 import freenect as fn
 import time as t
-import math
-import numpy as np
 import pyximport
 
 # build cython functions
 pyximport.install()
 from . import cyfunc
 
-SAMPLE_DISTANCE = 10
-
-SENSOR_PIXEL_HEIGHT = 480
-SENSOR_PIXEL_WIDTH = 640
-HALF_SENSOR_PX_HEIGHT = SENSOR_PIXEL_HEIGHT / 2
-HALF_SENSOR_PX_WIDTH = SENSOR_PIXEL_WIDTH / 2
-SENSOR_ANGULAR_WIDTH = math.radians(58.5);
-SENSOR_ANGULAR_HEIGHT = math.radians(46.6)
-SENSOR_ANGULAR_ELEVATION = math.radians(0.)
-POINT_CLOUD_UNITS_TO_METERS = 8.09
-BLUR_RADIUS = 2
-
-MAX_SLOPE = math.radians(20.)
-SLOPE_COMPARISON_VAL = np.tan(MAX_SLOPE) ** 2
+# grab PointCloud class from cyfunc so that it can be used here and
+# elsewhere more conveniently, without importing a cython file
+PointCloud = cyfunc.PointCloud
 
 
 class KinGeo:
@@ -124,35 +111,3 @@ class DepthMap:
         if not self._point_cloud:
             self._point_cloud = PointCloud(self.arr)
         return self._point_cloud
-
-
-class PointCloud:
-    def __init__(self, depth_arr):
-        self.depth_arr = depth_arr
-        self._point_arr = None
-
-    @property
-    def point_arr(self):
-        if not self._point_arr:
-            self._point_arr = \
-                cyfunc.point_arr_from_depth_arr(self.depth_arr[0])
-        return self._point_arr
-
-    @property
-    def time_stamp(self) -> int:
-        return self.depth_arr[1]
-
-
-def slope_in_bounds(p1, p2):
-    """
-    Gets slope from p1 to p2 as a 2d vector based on height (z)
-    position as radian
-    :param p1: np.array len 3
-    :param p2: np.array len 3
-    :return: float (radians)
-    """
-    dif = np.subtract(p1, p2)
-    flat_distance_sq = np.power(dif[0], 2), np.power(dif[2], 2)  # avoid sqrt
-    v_difference_sq = np.power(dif[1], 2)
-    slope_sq = v_difference_sq / flat_distance_sq
-    return slope_sq < SLOPE_COMPARISON_VAL
