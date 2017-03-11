@@ -92,7 +92,8 @@ class PwmChip:
 		self.pca = None
 		self.pca = pca9685_open(bytes(device_file, encoding="UTF-8"), bus_address)
 
-	def __enter__(self): pass
+	def __enter__(self):
+		return self
 
 	def activate(self, frequency=0):
 		pca9685_activate(self.pca, frequency)

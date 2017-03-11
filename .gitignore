@@ -31,3 +31,6 @@
 # Compiled and cached Python code
 *.pyc
 __pycache__/*
+
+# some sort of IDE bilge
+.idea/*
