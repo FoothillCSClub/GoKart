@@ -20,6 +20,11 @@
 
 * motion_controller/: Python package that contains MotionController
     class and related.
+    
+* const/: Python package storing constants for use throughout 
+    the program. Constants which will need to be used across 
+    packages should be placed inside one of the modules 
+    contained herein.
 
 * util/: Python package holding utility classes. These classes are
     those that are passed around between other packages, such as 
