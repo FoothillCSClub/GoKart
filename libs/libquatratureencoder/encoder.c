@@ -174,7 +174,7 @@ static void *read_loop(void *arg) {
 	return NULL; /* NOT REACHED */
 }
 
-int get_encoder_value(struct encoder_ctx *ctx, int *out) {
+int get_encoder_value(struct encoder_ctx *ctx, int *enc_val, struct timespec *last_sampling) {
 	int ret = 0;
 
 	if (pthread_mutex_lock(&ctx->lock))
@@ -184,8 +184,12 @@ int get_encoder_value(struct encoder_ctx *ctx, int *out) {
 		ret = -ctx->err_count;
 		ctx->err_count = 0;
 		errno = ctx->errnum;
-	} else
-		*out = ctx->value;
+	} else {
+		if (enc_val)
+			*enc_val = ctx->value;
+		if (last_sampling)
+			*last_sampling = ctx->last_sampletime;
+	}
 
 	pthread_mutex_unlock(&ctx->lock);
 

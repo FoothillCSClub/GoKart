@@ -24,7 +24,7 @@ struct encoder_ctx {
 };
 
 struct encoder_ctx *launch_read_loop(unsigned gpio_a, unsigned gpio_b);
-int get_encoder_value(struct encoder_ctx *ctx, int *out);
+int get_encoder_value(struct encoder_ctx *ctx, int *enc_val, struct timespec *last_sampling);
 int terminate_read_loop(struct encoder_ctx *ctx);
 
 #endif /* _QUADRATURE_ENCODER_H_ */
