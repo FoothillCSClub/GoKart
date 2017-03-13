@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <err.h>
 #include <signal.h>
+#include <time.h>
 
 #include <quadrature_encoder.h>
 
