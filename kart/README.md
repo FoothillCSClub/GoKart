@@ -1,5 +1,11 @@
 # Source Documentation
 
+This is the package that by convention stores source code for the 
+python-based project, analogous to the 'src' directory for C or 
+Java projects. 
+Source code for C and other languages is also stored
+herein in their own packages.
+
 ## Subfolders:
 
 * kinect/: Sub-project; contains classes for getting 
