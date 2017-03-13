@@ -254,6 +254,8 @@ struct encoder_ctx *qenc_launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 }
 
 int qenc_terminate_read_loop(struct encoder_ctx *ctx) {
+	int ret = 0;
+
 	if (
 		pthread_cancel(ctx->thread) ||
 		pthread_join(ctx->thread, NULL) ||
@@ -267,7 +269,9 @@ int qenc_terminate_read_loop(struct encoder_ctx *ctx) {
 		unexport_gpio(ctx->a_number) |
 		unexport_gpio(ctx->b_number)
 	)
-		return -1;
+		ret = -1;
 
-	return 0;
+	free(ctx);
+
+	return ret;
 }

@@ -12,10 +12,8 @@
 struct encoder_ctx *ctx = NULL;
 
 void cleanup(int dummy) {
-	if (ctx) {
+	if (ctx)
 		qenc_terminate_read_loop(ctx);
-		free(ctx);
-	}
 
 	exit(EXIT_FAILURE);
 }
