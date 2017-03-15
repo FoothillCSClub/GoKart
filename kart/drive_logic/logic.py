@@ -1,9 +1,14 @@
 """
 Main logic class
 """
+import math
+
+from scipy.spatial.kdtree import KDTree
+from mathutils import Vector
 
 from ..drive_data.data import DriveData
-from .turn_table import arcs as turn_arcs
+from .turn_table import arcs as turn_arcs, Arc
+from .const import SAFE_DISTANCE
 
 
 class Logic(object):
@@ -45,16 +50,77 @@ class MainLogic(Logic):
     to avoid obstacles and reach passed way-points (if implemented)
     """
 
+    def __init__(self, data: 'DriveData') -> None:
+        super().__init__(data)
+        self.last_radius_index = int(len(turn_arcs) / 2)
+        self._current_turn_radius = 0
+        self._current_speed = 0
+
     def tic(self) -> None:
-        pass
+        best_radius = self._find_turn_radius()
+        if best_radius is None:
+            # if no path could be found..
+            self._current_speed = 0
+            self._current_turn_radius = 0
+        else:
+            self._current_turn_radius = best_radius
+
+    def _find_turn_radius(self) -> float or None:
+        """
+        Find best turn radius.
+        :return:
+        """
+        if isinstance(self._data.next_waypoint, Vector):
+            assert False  # todo: score based on how close relative
+            # position is to next waypoint
+        else:
+            def scoring_func(end_pos: Vector): return end_pos.magnitude
+        best_arc = None
+        top_score = 0
+        for arc in turn_arcs:
+            end = self.get_end_of_arc(arc)
+            if end is None:
+                continue
+            score = scoring_func(end)
+            if score > top_score:
+                best_arc = arc
+        if best_arc:
+            return best_arc.radius
+        else:
+            return None
+
+    def _find_speed(self) -> float:
+        """
+        Finds best speed depending on available data
+        :return: float
+        """
+
+    def get_end_of_arc(self, arc: 'Arc') -> Vector:
+        """
+        Gets the last viable relative position from a passed Arc
+        :param arc: Arc
+        :return: Vector
+        """
+        col_avoid_cloud = self._data.col_avoid_pointmap
+        assert isinstance(col_avoid_cloud, KDTree)
+        last_safe_point = None
+        for pos in arc.positions:
+            impinging_points = col_avoid_cloud.query_ball_point(
+                pos, SAFE_DISTANCE
+            )
+            if len(impinging_points) == 0:
+                last_safe_point = pos
+            else:
+                break
+        return last_safe_point
 
     @property
     def target_turn_radius(self) -> float:
-        pass
+        return self._current_turn_radius
 
     @property
     def target_speed(self) -> float:
-        pass
+        return self._current_speed
 
 
 class SimpleTestLogic(Logic):
@@ -67,6 +133,12 @@ class SimpleTestLogic(Logic):
 
     Test should be completed within 15 seconds.
     """
+
+    def tic(self) -> None:
+        """
+        Does nothing in this test
+        :return: None
+        """
 
     @property
     def target_speed(self) -> float:
@@ -121,3 +193,21 @@ class StaticWheelTurnLogic(Logic):
             return 5
         else:
             return 0
+
+
+def expanding_indices(start_index: int, lower_bound: int, upper_bound: int):
+    """
+    Yields indices expanding progressively away from passed starting
+    index, continuing until bounds are reached.
+    :return:
+    """
+    i = 0
+    while True:
+        if lower_bound <= i < upper_bound:
+            yield i
+        elif abs(i) > max(abs(lower_bound), abs(upper_bound)):
+            break
+        if i >= 0:
+            i = i * -1 - 1
+        else:
+            i = i * -1 + 1

@@ -85,7 +85,7 @@ class GoKart:
         DriveData
         :return: None
         """
-        # TODO
+        self.kinect_input.update()
 
     @loop(LOGIC_FRQ)
     def logic_main(self) -> None:
@@ -95,7 +95,7 @@ class GoKart:
         setting target speed / turn radius / any other values
         :return: None
         """
-        # TODO
+        self.logic.tic()  # carry out one logic tic
 
     @loop(ACTUATOR_FRQ)
     def actuator_main(self) -> None:
