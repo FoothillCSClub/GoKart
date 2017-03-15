@@ -12,3 +12,5 @@ MAX_SPEED = 25  # currently used to determine main motor power setting.
 # this ^ is not the same as limits.SPEED, as that is the maximum target
 # speed that will be set, and should err low, while this value should
 # err high.
+
+DECELERATION_RATE = 1  # m/s^2  todo: measure this (placeholder value)

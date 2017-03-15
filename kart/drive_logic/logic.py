@@ -5,10 +5,13 @@ import math
 
 from scipy.spatial.kdtree import KDTree
 from mathutils import Vector
+from numpy import sqrt
 
 from ..drive_data.data import DriveData
 from .turn_table import arcs as turn_arcs, Arc
-from .const import SAFE_DISTANCE
+from .const import SAFE_DISTANCE, PREDICTION_DIST
+from ..const.limits import SPEED
+from ..const.phys_const import DECELERATION_RATE
 
 
 class Logic(object):
@@ -44,10 +47,10 @@ class Logic(object):
         raise NotImplementedError
 
 
-class MainLogic(Logic):
+class SimpleColAvoidLogic(Logic):
     """
-    Logic class that will attempt to use sensor and locator input
-    to avoid obstacles and reach passed way-points (if implemented)
+    Logic class that will attempt to use sensor input
+    to avoid obstacles. Does not pay attention to waypoints
     """
 
     def __init__(self, data: 'DriveData') -> None:
@@ -57,43 +60,31 @@ class MainLogic(Logic):
         self._current_speed = 0
 
     def tic(self) -> None:
-        best_radius = self._find_turn_radius()
-        if best_radius is None:
-            # if no path could be found..
-            self._current_speed = 0
-            self._current_turn_radius = 0
-        else:
-            self._current_turn_radius = best_radius
-
-    def _find_turn_radius(self) -> float or None:
-        """
-        Find best turn radius.
-        :return:
-        """
-        if isinstance(self._data.next_waypoint, Vector):
-            assert False  # todo: score based on how close relative
-            # position is to next waypoint
-        else:
-            def scoring_func(end_pos: Vector): return end_pos.magnitude
+        # find arc that allows kart to travel farthest
         best_arc = None
-        top_score = 0
+        best_distance = 0
         for arc in turn_arcs:
             end = self.get_end_of_arc(arc)
-            if end is None:
-                continue
-            score = scoring_func(end)
-            if score > top_score:
+            if end is not None and end.y > best_distance:
                 best_arc = arc
-        if best_arc:
-            return best_arc.radius
-        else:
-            return None
+                best_distance = end.y
+        if best_arc is None:
+            self._current_turn_radius = 0
+            self._current_speed = 0
+            return
+        # find speed based on distance to end of prediction
+        free_space = best_distance - SAFE_DISTANCE
+        self._current_speed = self.find_speed_from_distance(free_space)
 
-    def _find_speed(self) -> float:
+    def find_speed_from_distance(self, distance: float) -> float:
         """
-        Finds best speed depending on available data
+        Gets best speed given free distance before end of path
+        :param distance: float
         :return: float
         """
+        time = sqrt(distance * 2 / DECELERATION_RATE)
+        speed = time * DECELERATION_RATE
+        return speed
 
     def get_end_of_arc(self, arc: 'Arc') -> Vector:
         """
@@ -204,7 +195,7 @@ def expanding_indices(start_index: int, lower_bound: int, upper_bound: int):
     i = 0
     while True:
         if lower_bound <= i < upper_bound:
-            yield i
+            yield i + start_index
         elif abs(i) > max(abs(lower_bound), abs(upper_bound)):
             break
         if i >= 0:
