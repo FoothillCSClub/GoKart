@@ -20,6 +20,7 @@ void cleanup(int dummy) {
 
 int main(void) {
 	int enc_val;
+	int s;
 	struct timespec delay = {
 		.tv_sec = 0,
 		.tv_nsec = 500000000,
@@ -36,8 +37,8 @@ int main(void) {
 		err(EXIT_FAILURE, "error launching read loop");
 
 	while (1) {
-		if (qenc_get_encoder_value(ctx, &enc_val, &last_sampling))
-			warn("error reading encoder value");
+		if ((s = qenc_get_encoder_value(ctx, &enc_val, &last_sampling)))
+			warn("%d errors reading encoder value", -s);
 		else
 			printf(" < %+7d (%lu.%09ld) >\n", enc_val, last_sampling.tv_sec, last_sampling.tv_nsec);
 
