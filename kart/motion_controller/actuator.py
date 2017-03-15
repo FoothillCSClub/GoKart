@@ -98,9 +98,10 @@ pwm = pca.PwmChip("/dev/i2c-1", 0x40)
 
 
 class Actuator(object):
-    def __init__(self, rotations):
+    def __init__(self, drive_data):
         pwm.activate()
-        self.rotations = rotations
+        self.data = drive_data
+        self.rotations = self.find_steering_start_position()
         self.dir_chan = pwm.get_channel(1)  # direction channel
         self.mag_chan = pwm.get_channel(2)  # turn rate channel
         self.speed_chan = pwm.get_channel(0)  # main motor power channel
@@ -110,6 +111,13 @@ class Actuator(object):
 
     def update_current_rotations(self):
         self.rotations = self.get_encoder_rotations()
+
+    def find_steering_start_position(self) -> float:
+        """
+        Finds starting position in rotations
+        :return: number
+        """
+        # todo
 
     def get_encoder_rotations(self):
         return 1

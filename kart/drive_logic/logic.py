@@ -3,11 +3,12 @@ Main logic class
 """
 
 from ..drive_data.data import DriveData
+from .turn_table import arcs as turn_arcs
 
 
 class Logic(object):
     def __init__(self, data: DriveData):
-        self.data = data
+        self._data = data
 
     def tic(self) -> None:
         """
@@ -36,6 +37,24 @@ class Logic(object):
         :return:
         """
         raise NotImplementedError
+
+
+class MainLogic(Logic):
+    """
+    Logic class that will attempt to use sensor and locator input
+    to avoid obstacles and reach passed way-points (if implemented)
+    """
+
+    def tic(self) -> None:
+        pass
+
+    @property
+    def target_turn_radius(self) -> float:
+        pass
+
+    @property
+    def target_speed(self) -> float:
+        pass
 
 
 class SimpleTestLogic(Logic):

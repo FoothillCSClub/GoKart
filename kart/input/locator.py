@@ -3,8 +3,6 @@ Module holding locator classes which return information about
 kart position.
 """
 
-from ..util import Point
-
 
 class LocatorInput:
     """
@@ -12,7 +10,7 @@ class LocatorInput:
     """
 
     @property
-    def location(self) -> Point:
+    def location(self):
         """
         Gets location of kart
         :return: Point

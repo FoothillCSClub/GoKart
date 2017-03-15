@@ -19,6 +19,9 @@ import typing as ty
 import time
 
 from .drive_data.data import DriveData
+from .input.sensor import KinectInput
+from .drive_logic.logic import MainLogic
+from .motion_controller.actuator import Actuator
 
 # Main function call frequencies.
 # Can be used to limit the amount of cpu time a thread uses
@@ -28,6 +31,7 @@ from .drive_data.data import DriveData
 SENSOR_TH_FRQ = 60  # Hz
 LOGIC_FRQ = 60      # Hz
 ACTUATOR_FRQ = 60   # Hz
+MONITOR_FRQ = 20    # Hz, thread checking that other threads are functional
 
 
 class GoKart:
@@ -40,9 +44,13 @@ class GoKart:
         Instantiates GoKart class and creates instance of
         logic instances at start of run.
         """
-        self.drive_data = DriveData()
-        self.sensor_th = th.Thread(
-            target=self.sensor_main,
+        # make main classes
+        self.data = DriveData()
+        self.kinect_input = KinectInput(self.data)
+        self.logic = MainLogic(self.data)
+        self.actuator = Actuator(self.data)
+        self.kinect_th = th.Thread(
+            target=self.kinect_main,
             name='Sensor Thread')
         self.logic_th = th.Thread(
             target=self.logic_main,
@@ -51,7 +59,7 @@ class GoKart:
             target=self.actuator_main,
             name='Actuator Thread')
         # convenience iterable
-        self.main_threads = self.sensor_th, self.actuator_th, self.logic_th
+        self.main_threads = self.kinect_th, self.actuator_th, self.logic_th
 
     def main(self) -> None:
         """
@@ -61,17 +69,16 @@ class GoKart:
         :return: None
         """
         try:
-            self.sensor_th.start()
-            self.logic_th.start()
-            self.actuator_th.start()
+            [thread.start() for thread in self.main_threads]
+            self.monitor()  # loop monitoring running threads
         except Exception:
             # catch any exception that would end program execution so
             # that we can prevent disaster
-            pass  # TODO
+            self.failsafe_stop()
         # TODO: exit conditions, error handling, etc
 
     @loop(SENSOR_TH_FRQ)
-    def sensor_main(self) -> None:
+    def kinect_main(self) -> None:
         """
         Main method for sensor handling thread.
         Responsible for collecting sensor information and updating
@@ -98,6 +105,33 @@ class GoKart:
         :return: None
         """
         # TODO
+
+    @loop(MONITOR_FRQ)
+    def monitor(self) -> None:
+        """
+        Method that monitors other threads for exit.
+        If any main thread exits, calls fail-safe methods.
+        :return: None
+        """
+        if not self.all_threads_running:
+            self.failsafe_stop()
+
+    def failsafe_stop(self) -> None:
+        """
+        Method called to stop vehicle as quickly as possible.
+        This method is intended to be called only when exceptions have been
+        raised, and so should not worry about exiting gracefully, simply
+        with as much physical safety as possible.
+        :return: None
+        """
+        # first attempt to instruct actuator to set speed to 0
+        try:
+            self.actuator.speed = 0
+        except Exception:
+            pass
+        # todo:
+        # whether that fails or not, also set motor channel pwm to
+        # stop the motor
 
     @property
     def all_threads_running(self) -> bool:

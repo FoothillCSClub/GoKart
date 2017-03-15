@@ -117,6 +117,8 @@ cdef class PointCloud:
     def height(self):
         return CLOUD_HEIGHT
 
+    # this is implemented here, outside __getitem__ because magic
+    # methods must be python-defined, and this slows things down.
     cdef get_point(self, unsigned short x, unsigned short y):
         cdef np.ndarray point
         # get point as stored in point array.
