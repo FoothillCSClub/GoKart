@@ -239,6 +239,7 @@ struct encoder_ctx *qenc_launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 
 	if (
 		pthread_attr_init(&thread_attr) ||
+		pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED) ||
 		pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO) ||
 		pthread_attr_setschedparam(&thread_attr, &thread_priority) ||
 		pthread_create(&ctx->thread, &thread_attr, read_loop, ctx)
