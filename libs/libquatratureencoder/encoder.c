@@ -112,9 +112,9 @@ static void *read_loop(void *arg) {
 
 	while (1) {
 		pollfds[0].fd = ctx->a_fd;
-		pollfds[0].events = POLLIN | POLLPRI;
+		pollfds[0].events = POLLERR | POLLPRI;
 		pollfds[1].fd = ctx->b_fd;
-		pollfds[1].events = POLLIN | POLLPRI;
+		pollfds[1].events = POLLERR | POLLPRI;
 
 		if (poll(pollfds, 2, -1) < 0)
 			goto error;
