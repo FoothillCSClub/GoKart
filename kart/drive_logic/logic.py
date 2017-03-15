@@ -7,8 +7,7 @@ from ..drive_data.data import DriveData
 
 class Logic(object):
     def __init__(self, data: DriveData):
-        self.conditions = {}
-        self._data = data
+        self.data = data
 
     def tic(self) -> None:
         """
@@ -16,7 +15,7 @@ class Logic(object):
             Evaluates each condition once, and runs appropriate methods
         :return: None
         """
-        [cond.tic() for cond in self.conditions.values()]
+        raise NotImplementedError
 
     @property
     def target_speed(self) -> float:

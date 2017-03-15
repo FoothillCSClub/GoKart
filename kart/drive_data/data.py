@@ -4,9 +4,6 @@ Module holding data objects for kart program.
 
 from time import time  # used to track run time
 
-import kart.drive_data.limits as limits
-import kart.drive_data.constants as constants
-
 
 class DriveData:
     """
@@ -15,16 +12,7 @@ class DriveData:
     """
     def __init__(self):
         self.start_time = time()
-        # todo
-
-    # probably a better way to do this.
-    @property
-    def limits(self) -> object:
-        return limits
-
-    @property
-    def constants(self) -> object:
-        return constants
+        self.col_avoid_pointmap = None  # set by input
 
     @property
     def run_time(self) -> float:

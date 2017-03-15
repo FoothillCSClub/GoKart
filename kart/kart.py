@@ -18,7 +18,7 @@ import threading as th
 import typing as ty
 import time
 
-from .drive_data import DriveData
+from .drive_data.data import DriveData
 
 # Main function call frequencies.
 # Can be used to limit the amount of cpu time a thread uses

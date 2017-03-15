@@ -17,6 +17,12 @@ arcs = []
 
 
 class Arc:
+    """
+    Class representing the path the vehicle could take, describing
+    a segment of a circle with passed radius.
+    Alternatively, if passed radius is 0, returns positions along
+    a straight line.
+    """
     # all these methods herein should only be called at startup,
     # and so performance is a non-priority
     def __init__(self, radius: float):

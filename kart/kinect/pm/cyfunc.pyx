@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import itertools as itr
-import kart.kinect.pm.kinect as kinect
 cimport numpy as np
 
 
@@ -197,7 +196,9 @@ cdef class PointCloud:
         p2 = self[x, y2]
         return slope_in_bounds(p1, p2)
 
-cdef bint slope_in_bounds(p1, p2):
+# providing this function in both python and c to permit testing
+# from a python module. May be a better way to do this?
+cpdef bint slope_in_bounds(p1, p2):
     """
     Gets slope from p1 to p2 as a 2d vector based on height (z)
     position as radian
