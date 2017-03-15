@@ -200,6 +200,10 @@ struct encoder_ctx *qenc_launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 	char gpio_a_filename[FILENAME_MAX+1];
 	char gpio_b_filename[FILENAME_MAX+1];
 	struct encoder_ctx *ctx;
+	pthread_attr_t thread_attr;
+	struct sched_param thread_priority = {
+		.sched_priority = 99,
+	};
 
 	if (!(ctx = calloc(1, sizeof(*ctx))))
 		return NULL;
@@ -232,10 +236,16 @@ struct encoder_ctx *qenc_launch_read_loop(unsigned gpio_a, unsigned gpio_b) {
 		get_gpio_value(ctx->b_fd, &ctx->b_value)
 	)
 		goto fail;
-		
 
-	if (pthread_create(&ctx->thread, NULL, read_loop, ctx))
+	if (
+		pthread_attr_init(&thread_attr) ||
+		pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO) ||
+		pthread_attr_setschedparam(&thread_attr, &thread_priority) ||
+		pthread_create(&ctx->thread, &thread_attr, read_loop, ctx)
+	)
 		goto fail;
+
+	pthread_attr_destroy(&thread_attr);
 
 	return ctx;
 
