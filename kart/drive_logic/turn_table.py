@@ -59,16 +59,22 @@ class Arc:
             x = (1 - np.cos(radians_travelled)) * self.radius
             return x, z
 
+    def __repr__(self):
+        return 'Arc[radius={}]'.format(self.radius)
+
 
 def populate_arcs():
     center_index = int(N_RADII / 2)
+    print([i for i in range(-center_index, N_RADII - center_index)])
     radii = [
-        (1 / limits.MIN_LEFT_TURN_RADIUS) / i if i < center_index else
-        (1 / limits.MIN_RIGHT_TURN_RADIUS) / i if i > center_index else
+        (limits.MIN_LEFT_TURN_RADIUS / (abs(i) / center_index)) if i < 0 else
+        (limits.MIN_RIGHT_TURN_RADIUS / (abs(i) / center_index)) if i > 0 else
         0
-        for i in range(N_RADII)
+        for i in range(-center_index, N_RADII - center_index)
     ]
     for radius in radii:
         arcs.append(Arc(radius))
 
 populate_arcs()
+
+print(arcs)
