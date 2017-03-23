@@ -183,23 +183,28 @@ cdef class PointCloud:
             # marked for removal
             active_x_positions -= removed_x_positions
             removed_x_positions.clear()
+        # printer(points)
         return points
 
     cdef bint _point_is_traversable(self, unsigned short x, unsigned short y):
         cdef np.ndarray points, p1, p2
         cdef unsigned short x2
         p1 = self[x, y]
+        # if p1 is zeroed, it does not represent a point in space.
+        # we'll return true as a default value.
+        if not p1.any():
+            return True
         x2 = x -1 if x != 0 else 1
         p2 = self[x2, y]
-        if not slope_in_bounds(p1, p2):
+        if p2.any() and not slope_in_bounds(p1, p2):
             return False
         cdef unsigned short y2
         y2 = y -1 if y != 0 else 1
         p2 = self[x, y2]
-        return slope_in_bounds(p1, p2)
+        return not p2.any() or slope_in_bounds(p1, p2)
 
 # providing this function in both python and c to permit testing
-# from a python module. May be a better way to do this?
+# from a python module. There may be a better way to do this?
 cpdef bint slope_in_bounds(p1, p2):
     """
     Gets slope from p1 to p2 as a 2d vector based on height (z)
@@ -212,8 +217,13 @@ cpdef bint slope_in_bounds(p1, p2):
         np.ndarray dif
         double flat_distance_sq, v_difference_sq, slope_sq
     dif = np.subtract(p1, p2)
-    flat_distance_sq = np.power(dif[0], 2) + np.power(dif[2], 2)  # avoid sqrt
-    v_difference_sq = np.power(dif[1], 2)
+    flat_distance_sq = np.power(dif[0], 2) + np.power(dif[1], 2)  # avoid sqrt
+    v_difference_sq = np.power(dif[2], 2)
+    # if flat distance is 0, then the slope is vertical.
+    if flat_distance_sq == 0:
+        # if both points are identical, something's gone wrong
+        assert v_difference_sq != 0
+        return False
     slope_sq = v_difference_sq / flat_distance_sq
     return slope_sq < SLOPE_COMPARISON_VAL
 
@@ -223,7 +233,7 @@ cpdef np.ndarray pos_from_depth_map_point(int x, int y, int map_depth):
         SENSOR_ANGULAR_WIDTH
     cdef double angular_y = float(y - HALF_SENSOR_PX_HEIGHT) / SENSOR_PIXEL_HEIGHT *\
             SENSOR_ANGULAR_HEIGHT + SENSOR_ANGULAR_ELEVATION
-    cdef double depth = np.tan(map_depth / 2842.5 + 1.1863)
+    cdef double depth = np.tan(map_depth / 2842.5 + 1.1863) / 8.09
     pos = np.array((
         np.sin(angular_x) * depth,
         depth,

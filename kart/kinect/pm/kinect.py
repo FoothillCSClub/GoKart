@@ -37,6 +37,7 @@ class KinGeo:
         self._depth_map = None  # holds numpy array of
         self._pc_timestamp = 0.
         self._points_arr_timestamp = 0.
+        # todo: set inclination to 0
 
     @property
     def t_since_last_frame(self):
