@@ -158,7 +158,7 @@ class Actuator(object):
         self.mag_chan.duty_cycle = rate
 
     def stop_wheel_turn(self):
-        self.mag_chan = 0
+        self.mag_chan.duty_cycle = 0
 
     @property
     def speed(self) -> float:
