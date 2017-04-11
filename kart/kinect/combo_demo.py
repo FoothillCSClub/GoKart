@@ -4,6 +4,7 @@ import vispy.scene as scene
 import vispy.app as app
 import PyQt5  # used by vispy.app, the import here is used as a marker.
 
+from scipy.spatial.kdtree import KDTree
 from vispy.scene import visuals
 
 from kart.kinect.pm.kinect import KinGeo
@@ -49,6 +50,10 @@ class ComboDemoCanvas(scene.SceneCanvas):
         if sys.flags.interactive != 1:
             app.run()
 
+    def on_draw(self, event):
+        super().on_draw(event)
+        self._update_data()
+
     def _update_data(self):
         self._update_sampled_positions()
         self._update_boundary_positions()
@@ -59,7 +64,7 @@ class ComboDemoCanvas(scene.SceneCanvas):
         self.sampled_points.set_data(  # set points data to generated points
             sampled_point_data,
             edge_color=None,
-            face_color=(1, 1, 0.9, .5),
+            face_color=(1, 1, 0.9, .5),  # white
             size=5)
 
     def _update_boundary_positions(self):
@@ -68,23 +73,24 @@ class ComboDemoCanvas(scene.SceneCanvas):
         self.bound_points.set_data(  # set points data to generated points
             self.bound_point_data,
             edge_color=None,
-            face_color=(1, 0.2, 0.24, .5),
+            face_color=(1, 0.2, 0.24, .5),  # red
             size=9)
 
     def _update_path_positions(self):
-        self.drive_data.col_avoid_pointmap = self.bound_point_data
+        flat_points = []
+        for x, pos in enumerate(self.bound_point_data):
+            if pos[1] > 0:
+                flat_points.append((pos[0], pos[1]))
+        self.drive_data.col_avoid_pointmap = KDTree(flat_points)
+        self.logic.tic()
         arc = Arc(self.logic.target_turn_radius)
         arc_positions = \
             np.array([(pos[0], pos[1], 0) for pos in arc.positions])
         self.path_points.set_data(  # set points data to generated points
             arc_positions,
             edge_color=None,
-            face_color=(0.2, 0.9, 0.24, .5),
+            face_color=(0.2, 0.9, 0.24, .5),  # green
             size=15)
-
-    def on_draw(self, event):
-        super().on_draw(event)
-        self._update_data()
 
     class SamplePoints(visuals.Markers):
         pass
