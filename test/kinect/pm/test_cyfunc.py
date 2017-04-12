@@ -4,7 +4,7 @@ import pyximport
 
 pyximport.install()
 
-from ..pm.cyfunc import slope_in_bounds
+from kart.kinect.pm.cyfunc import slope_in_bounds
 
 
 class TestFuncs(TestCase):
