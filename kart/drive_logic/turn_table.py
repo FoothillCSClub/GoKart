@@ -55,7 +55,7 @@ class Arc:
             circle_circumference = self.radius * np.pi
             fraction_described = distance / circle_circumference
             radians_travelled = fraction_described * np.pi
-            z = abs(np.sin(radians_travelled)) * self.radius
+            z = np.sin(radians_travelled) * self.radius
             x = (1 - np.cos(radians_travelled)) * self.radius
             return x, z
 

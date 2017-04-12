@@ -1,3 +1,8 @@
+"""
+This module contains Cython functions and classes that are imported and
+used by the kinect module of the same package.
+"""
+
 import math
 import numpy as np
 import itertools as itr
@@ -106,7 +111,7 @@ cdef class PointCloud:
         if self._nearest_non_traversable is None:
             # if array has not been made, make it now.
             self._nearest_non_traversable = \
-                self.find_nearest_non_traversable_points()
+                self._find_nearest_non_traversable_points()
         return self._nearest_non_traversable
 
     @property
@@ -161,7 +166,7 @@ cdef class PointCloud:
             self._point_arr[arr_y_index][arr_x_index] = \
                 pos_from_depth_map_point(x, y, map_depth)
 
-    cdef np.ndarray find_nearest_non_traversable_points(self):
+    cdef np.ndarray _find_nearest_non_traversable_points(self):
         # note: this method is largely un-optimized
         active_x_positions = set(x for x in range(0, CLOUD_WIDTH))
         removed_x_positions = set()
@@ -196,12 +201,12 @@ cdef class PointCloud:
             return True
         x2 = x -1 if x != 0 else 1
         p2 = self[x2, y]
-        if p2.any() and not slope_in_bounds(p1, p2):
+        if p2[1] > 0 and not slope_in_bounds(p1, p2):
             return False
         cdef unsigned short y2
         y2 = y -1 if y != 0 else 1
         p2 = self[x, y2]
-        return not p2.any() or slope_in_bounds(p1, p2)
+        return not p2[1] > 1 or slope_in_bounds(p1, p2)
 
 # providing this function in both python and c to permit testing
 # from a python module. There may be a better way to do this?

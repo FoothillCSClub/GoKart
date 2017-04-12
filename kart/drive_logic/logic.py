@@ -15,6 +15,10 @@ from ..const.phys_const import DECELERATION_RATE
 
 
 class Logic(object):
+    """
+    Abstract logic class extended by other logic subclasses that can
+    be used interchangeably.
+    """
     def __init__(self, data: DriveData):
         self._data = data
 
@@ -74,16 +78,19 @@ class SimpleColAvoidLogic(Logic):
             return
         # find speed based on distance to end of prediction
         free_space = best_distance - SAFE_DISTANCE
-        self._current_speed = self.find_speed_from_distance(free_space)
+        self._current_speed = self._find_speed_from_distance(free_space)
 
-    def find_speed_from_distance(self, distance: float) -> float:
+    def _find_speed_from_distance(self, distance: float) -> float:
         """
-        Gets best speed given free distance before end of path
+        Gets best speed given free distance before end of path.
+        The speed returned will be at or below the highest speed from
+        which the vehicle can decelerate within the free space ahead
+        of it.
         :param distance: float
         :return: float
         """
-        time = sqrt(distance * 2 / DECELERATION_RATE)
-        speed = time * DECELERATION_RATE
+        deceleration_time = sqrt(distance * 2 / DECELERATION_RATE)
+        speed = deceleration_time * DECELERATION_RATE
         return speed
 
     def get_end_of_arc(self, arc: 'Arc') -> Vector:
@@ -93,7 +100,8 @@ class SimpleColAvoidLogic(Logic):
         :return: Vector
         """
         col_avoid_cloud = self._data.col_avoid_pointmap
-        assert isinstance(col_avoid_cloud, KDTree)
+        assert isinstance(col_avoid_cloud, KDTree), \
+            'expected KDTree, got %s' % col_avoid_cloud
         last_safe_point = None
         for pos in arc.positions:
             impinging_points = col_avoid_cloud.query_ball_point(
@@ -103,7 +111,7 @@ class SimpleColAvoidLogic(Logic):
                 last_safe_point = pos
             else:
                 break
-        return last_safe_point
+        return Vector(last_safe_point) if last_safe_point is not None else None
 
     @property
     def target_turn_radius(self) -> float:

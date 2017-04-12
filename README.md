@@ -1,5 +1,7 @@
 # Go-Kart AI
 ###### AI for self-driving go-kart.
+The goal of this project is to create a program which can navigate in a
+meaningful way while avoiding obstacles in its path.
 
 __[Google Drive (UPDATED) ](https://drive.google.com/open?id=0B0jf70Ozjo61Y29xN1paZFhmM1k)__
 

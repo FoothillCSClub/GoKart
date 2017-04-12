@@ -108,7 +108,7 @@ class DepthMap:
         return self.arr[1]
 
     @property
-    def point_cloud(self) -> 'Point':
+    def point_cloud(self) -> 'PointCloud':
         if not self._point_cloud:
             self._point_cloud = PointCloud(self.arr)
         return self._point_cloud

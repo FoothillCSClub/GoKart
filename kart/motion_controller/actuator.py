@@ -178,6 +178,7 @@ class Actuator(object):
         """
         self._tgt_speed = speed
         self.speed_chan.set_duty_cycle(speed / PHYS_MAX_SPEED, 0)
+        # take into account our lack of a differential?
 
     @property
     def turn_radius(self) -> float:
