@@ -21,4 +21,7 @@ __[Design doc (Old)](https://docs.google.com/document/d/1E0Wp-5Nq-G63zqMJN1eicz0
 * kart/: Package holding source code for project (analogous to 'src' 
     folder in Java or C)
     
+* test/: Package containing test classes and methods for testing
+    classes/methods in the kart package.
+
 * lib/: Directory containing compiled C for use by project.

@@ -20,7 +20,7 @@ import time
 
 from .drive_data.data import DriveData
 from .input.sensor import KinectInput
-from .drive_logic.logic import MainLogic
+from .drive_logic.logic import SimpleColAvoidLogic
 from .motion_controller.actuator import Actuator
 
 # Main function call frequencies.
@@ -32,6 +32,8 @@ SENSOR_TH_FRQ = 60  # Hz
 LOGIC_FRQ = 60      # Hz
 ACTUATOR_FRQ = 60   # Hz
 MONITOR_FRQ = 20    # Hz, thread checking that other threads are functional
+
+LOGIC_CLASS = SimpleColAvoidLogic
 
 
 class GoKart:
@@ -47,7 +49,9 @@ class GoKart:
         # make main classes
         self.data = DriveData()
         self.kinect_input = KinectInput(self.data)
-        self.logic = MainLogic(self.data)
+        # instantiate logic class.
+        # This is a constant so that it is more easily exchangeable.
+        self.logic = LOGIC_CLASS(self.data)
         self.actuator = Actuator(self.data)
         self.kinect_th = th.Thread(
             target=self.kinect_main,
@@ -129,9 +133,8 @@ class GoKart:
             self.actuator.speed = 0
         except Exception:
             pass
-        # todo:
-        # whether that fails or not, also set motor channel pwm to
-        # stop the motor
+            # todo:
+            # set motor channel pwm to stop the motor
 
     @property
     def all_threads_running(self) -> bool:
@@ -163,13 +166,16 @@ def loop(frq: float=0., exit_test: ty.Callable[[], bool]=None):
 
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            while exit_test() if exit_test else True:
+            # loop while exit test returns false if one has been passed
+            while not exit_test() if exit_test else True:
                 # is there a better way to handle frequent sleeping?
                 start_time = time.time()
                 func(self, *args, **kwargs)  # call decorated method
                 elapsed_t = time.time() - start_time
                 if loop_t > elapsed_t:
                     time.sleep(loop_t - elapsed_t)  # sleeps current thread
+                    # while thread is sleeping, the cpu is free to
+                    # work on other threads until the sleep time ends.
         return wrapper
     return decorator
 

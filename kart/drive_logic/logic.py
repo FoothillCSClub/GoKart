@@ -21,7 +21,7 @@ from ..const.phys_const import DECELERATION_RATE
 
 class Logic(object):
     """
-    Abstract logic class extended by other logic subclasses that can
+    Abstract drive_logic class extended by other drive_logic subclasses that can
     be used interchangeably.
     """
     def __init__(self, data: DriveData):
@@ -29,7 +29,7 @@ class Logic(object):
 
     def tic(self) -> None:
         """
-        Runs one logic tic;
+        Runs one drive_logic tic;
             Evaluates each condition once, and runs appropriate methods
         :return: None
         """
@@ -63,6 +63,9 @@ class SimpleColAvoidLogic(Logic):
     """
     Logic class that will attempt to use sensor input
     to avoid obstacles. Does not pay attention to waypoints
+
+    This class as written is intended to be extended by
+    another drive_logic class which does pay attention to waypoints.
     """
 
     def __init__(self, data: 'DriveData') -> None:
@@ -132,7 +135,7 @@ class SimpleColAvoidLogic(Logic):
 
 class SimpleTestLogic(Logic):
     """
-    Simple logic class which can be used for testing.
+    Simple drive_logic class which can be used for testing.
 
     At time of this writing, should simply test that
     wheels are able to turn and kart can be moved
@@ -176,7 +179,7 @@ class SimpleTestLogic(Logic):
 
 class StaticWheelTurnLogic(Logic):
     """
-    Simple test logic class that does not (assuming everything
+    Simple test drive_logic class that does not (assuming everything
     works correctly) move the kart, but simply test that the
     steering system is able to turn the wheels.
 
