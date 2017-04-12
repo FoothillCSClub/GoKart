@@ -1,8 +1,13 @@
 """
-Main logic class
-"""
-import math
+Python Module holding DriveLogic classes which themselves
+have target_speed and target_turn_radius properties which are
+intended to be accessed from the main kart module and used by
+the Actuator class.
 
+The different classes extending the abstract Logic class are intended
+to be interchangeable depending on situation, whether for actual use
+or testing.
+"""
 from scipy.spatial.kdtree import KDTree
 from mathutils import Vector
 from numpy import sqrt
@@ -45,8 +50,11 @@ class Logic(object):
     @property
     def target_turn_radius(self) -> float:
         """
-        Gets turn radius in meters which
-        :return:
+        Gets turn radius in meters which vehicle should attempt to
+        turn at.
+
+        Can not be set directly.
+        :return: float (meters)
         """
         raise NotImplementedError
 

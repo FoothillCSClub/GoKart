@@ -153,7 +153,7 @@ def loop(frq: float=0., exit_test: ty.Callable[[], bool]=None):
     This decorator is intended to be placed on a method, since it
     passes a 'self' arg. If it in the future needs to be applied to
     functions not belonging to a class, the implementation can be
-    updated for the wider scope.
+    updated for the wider scope of use.
 
     :param frq: frequency at which function is looped
     :param exit_test: Callable[[] bool]

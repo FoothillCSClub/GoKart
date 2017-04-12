@@ -1,3 +1,9 @@
+"""
+This module runs a visualization of sensor input, the pointcloud
+generated from the passed sensor input, the detected border of
+navigable space, and the path selected by the Logic class.
+"""
+
 import sys
 import numpy as np
 import vispy.scene as scene
