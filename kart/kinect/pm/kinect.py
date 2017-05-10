@@ -40,7 +40,7 @@ class KinGeo:
         # todo: set inclination to 0
 
     @property
-    def t_since_last_frame(self):
+    def t_since_last_frame(self) -> float:
         """
         Returns time since last depth frame was accessed from Kinect
         :return: float
@@ -48,7 +48,7 @@ class KinGeo:
         return t.time() - self.last_access
 
     @property
-    def access_hz(self):
+    def access_hz(self) -> float:
         """
         Gets access Hz of kinect. Will not ask the Kinect for depth
         data more often than this.
@@ -65,7 +65,7 @@ class KinGeo:
         self._frame_time = 1. / float(hz)
 
     @property
-    def depth_map(self):
+    def depth_map(self) -> 'DepthMap':
         """
         Gets DepthMap for current sensor frame
         :return: DepthMap
@@ -83,12 +83,12 @@ class KinGeo:
         return DepthMap(self._depth_map)
 
     @property
-    def point_cloud(self):
+    def point_cloud(self) -> 'PointCloud':
         """
         Gets point cloud of positions from depth map.
         Returns point cloud as three dimensional array of
         [column][row][point position]
-        :return: np.Array
+        :return: PointCloud
         """
         # build point cloud from current depth map
         return self.depth_map.point_cloud
