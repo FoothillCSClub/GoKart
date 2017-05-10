@@ -44,6 +44,7 @@ def point_arr_from_depth_arr(dm):
         int map_depth  # depth of map at each point
         int arr_x_index  # point array x position
         int arr_y_index  # point array y position
+        int x, y  # x and y indices in depth-map
     for x, y in itr.product(x_range, y_range):
         # create a point in the newly formed point-cloud.
         map_depth = dm[y][x]
