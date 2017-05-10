@@ -150,14 +150,32 @@ class Actuator(object):
                 self.update_current_rotations()
 
     def turn_wheels_left(self, rate=1):
+        """
+        Helper method, sets PWM channel so as to have the steering
+        motor move turning wheels to the left at passed rate, with
+        1 being max rate.
+        :param rate: float 0 to 1
+        :return None
+        """
         self.dir_chan.duty_cycle = 0
         self.mag_chan.duty_cycle = rate
 
     def turn_wheels_right(self, rate=1):
+        """
+        Helper method, sets PWM channel so as to have the steering
+        motor move turning wheels to the right at passed rate, with
+        1 being max rate.
+        :param rate: float 0 to 1
+        :return None
+        """
         self.dir_chan.duty_cycle = 1
         self.mag_chan.duty_cycle = rate
 
     def stop_wheel_turn(self):
+        """
+        Sets PWM channel so as to instruct steering motor to stop.
+        :return: None
+        """
         self.mag_chan.duty_cycle = 0
 
     @property
@@ -172,13 +190,16 @@ class Actuator(object):
     def speed(self, speed: float) -> None:
         """
         Takes a speed in m/s (for sake of keeping with SI units)
-        and attempts to
+        and sets motor throttle so as to attempt to match cart speed
+        to that passed.
         :param speed: float (m/s)
         :return: None
         """
         self._tgt_speed = speed
         self.speed_chan.set_duty_cycle(speed / PHYS_MAX_SPEED, 0)
         # take into account our lack of a differential?
+        # if a speed sensor is added in the future, this method should
+        # be updated
 
     @property
     def turn_radius(self) -> float:
