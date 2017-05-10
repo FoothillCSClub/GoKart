@@ -24,4 +24,3 @@ class TestFuncs(TestCase):
     def test_func_slope_less_than_returns_true_when_slope_is_flat(self):
         # horizontal_distance == 1, vertical distance == 0
         self.assertTrue(slope_in_bounds([0, 1, 0], [0, 0, 0]))
-

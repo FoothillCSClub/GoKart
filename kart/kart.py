@@ -21,7 +21,7 @@ import time
 from .drive_data.data import DriveData
 from .input.sensor import KinectInput
 from .drive_logic.logic import SimpleColAvoidLogic
-from .motion_controller.actuator import Actuator
+from .actuator.actuator import Actuator
 
 # Main function call frequencies.
 # Can be used to limit the amount of cpu time a thread uses
@@ -68,7 +68,7 @@ class GoKart:
     def main(self) -> None:
         """
         Continuously updates drive_data with information from sensors,
-        gets commands from drive_logic and calls motion_controller
+        gets commands from drive_logic and calls actuator
         methods.
         :return: None
         """
