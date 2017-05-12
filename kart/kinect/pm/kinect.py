@@ -1,6 +1,7 @@
 import freenect as fn
 import time as t
 import pyximport
+import numpy as np
 
 # build cython functions
 pyximport.install()
@@ -112,3 +113,11 @@ class DepthMap:
         if not self._point_cloud:
             self._point_cloud = PointCloud(self.arr)
         return self._point_cloud
+
+    def dump(self, path: str) -> None:
+        assert isinstance(self.arr, np.ndarray)
+        self.arr.dump(path)
+
+    @classmethod
+    def load(cls, path: str) -> 'DepthMap':
+        return cls(np.load(path))  # return new DepthMap with array from file
