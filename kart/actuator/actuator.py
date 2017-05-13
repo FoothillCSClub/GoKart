@@ -1,7 +1,11 @@
 """
 This module holds motion controllers
 """
-from ..hardware import pca9685 as pca
+try:
+    from ..hardware import pca9685 as pca
+except OSError as e:
+    pca = None
+    print('could not import pca9685 from hardware: ' + str(e))
 from ..const.phys_const import MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE, \
     MAX_SPEED as PHYS_MAX_SPEED
 
@@ -94,12 +98,11 @@ turnWheels(double angle)
 }
 """""
 
-pwm = pca.PwmChip("/dev/i2c-1", 0x40)
-
 
 class Actuator(object):
-    def __init__(self, drive_data):
-        pwm.activate()
+    def __init__(self, drive_data, pwm=None):
+        self.pwm = pwm if pwm else pca.PwmChip("/dev/i2c-1", 0x40)
+        self.pwm.activate()
         self.data = drive_data
         self.rotations = self.find_steering_start_position()
         self.dir_chan = pwm.get_channel(1)  # direction channel
@@ -196,7 +199,7 @@ class Actuator(object):
         :return: None
         """
         self._tgt_speed = speed
-        self.speed_chan.set_duty_cycle(speed / PHYS_MAX_SPEED, 0)
+        self.speed_chan.set_duty_cycle(speed / PHYS_MAX_SPEED)
         # take into account our lack of a differential?
         # if a speed sensor is added in the future, this method should
         # be updated
