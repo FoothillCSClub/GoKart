@@ -14,7 +14,8 @@ ENCODER_RATIO = 500
 
 # TODO: move method docs to the appropriate method in Actuator
 """"
-max angle range = ***(needs to be determined experimentally)***
+max angle range = 67 degrees (each way), but let's say 60 (each way) to be safe. These numbers are drawn from here: 
+https://github.com/orrblue/GoKart/blob/master/autonomous_steering/autonomous_steering.ino
 turning left is negative, turning right is positive
 range should be (-maxLeftAngle, maxRightAngle)
 
