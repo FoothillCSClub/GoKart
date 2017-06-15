@@ -115,8 +115,10 @@ class DepthMap:
         return self._point_cloud
 
     def dump(self, path: str) -> None:
-        assert isinstance(self.arr, np.ndarray)
-        self.arr.dump(path)
+        arr = self.arr[0]
+        assert isinstance(arr, np.ndarray), \
+            'expected ndarray, got: {}, a {}'.format(repr(arr), type(arr))
+        arr.dump(path)
 
     @classmethod
     def load(cls, path: str) -> 'DepthMap':
