@@ -5,7 +5,7 @@ by the user.
 import os
 
 from kart.kinect.demo import KinGeo
-from ..settings import TEST_RESOURCES_ROOT
+from test.settings import TEST_RESOURCES_ROOT
 
 name = input('enter name for file: ')
 
