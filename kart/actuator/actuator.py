@@ -106,7 +106,7 @@ class Actuator(object):
         self.pwm.activate()
         self.data = drive_data
         self.rotations = self.find_steering_start_position()
-        self.dir_chan = pwm.get_channel(1)  # direction channel
+        self.dir_chan = pwm.get_channel(1)  # direction channel; 0 == left
         self.mag_chan = pwm.get_channel(2)  # turn rate channel
         self.speed_chan = pwm.get_channel(0)  # main motor power channel
 
