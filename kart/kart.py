@@ -75,11 +75,12 @@ class GoKart:
         try:
             [thread.start() for thread in self.main_threads]
             self.monitor()  # loop monitoring running threads
-        except Exception:
+        except Exception as e:
             # catch any exception that would end program execution so
             # that we can prevent disaster
             self.failsafe_stop()
-        # TODO: exit conditions, error handling, etc
+            raise e  # re-throw exception afterwards
+        # TODO: additional exit conditions, error handling, etc
 
     @loop(SENSOR_TH_FRQ)
     def kinect_main(self) -> None:
@@ -108,7 +109,7 @@ class GoKart:
         and turn radius (and any other values that may become important)
         :return: None
         """
-        # TODO
+        self.actuator.tic()
 
     @loop(MONITOR_FRQ)
     def monitor(self) -> None:
@@ -176,6 +177,7 @@ def loop(frq: float=0., exit_test: ty.Callable[[], bool]=None):
                     time.sleep(loop_t - elapsed_t)  # sleeps current thread
                     # while thread is sleeping, the cpu is free to
                     # work on other threads until the sleep time ends.
+        wrapper.__name__ = func.__name__  # rename wrapper with func's name
         return wrapper
     return decorator
 
