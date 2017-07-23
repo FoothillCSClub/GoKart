@@ -1,159 +1,92 @@
 """
 This module holds motion controllers
 """
+
+import math
+# try to import pca module, but that might not be possible if we're
+# just doing a unittest or testing in a simulated environment
 try:
     from ..hardware import pca9685 as pca
 except OSError as e:
     pca = None
     print('could not import pca9685 from hardware: ' + str(e))
 from ..const.phys_const import MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE, \
-    MAX_SPEED as PHYS_MAX_SPEED
+    MAX_SPEED as PHYS_MAX_SPEED, WHEEL_BASE
 
 
-ENCODER_RATIO = 500
+# angle in radians within which the wheel turn rate is
+# reduced as actual angle approaches target angle.
+# prevents wheel 'stutter' by reducing speed as wheel angle
+# approaches target.
+WHEEL_TURN_DAMPER_ANGLE = 0.087  # 0.087 radians == 5 degrees
 
-# TODO: move method docs to the appropriate method in Actuator
-""""
-max angle range = 67 degrees (each way), but let's say 60 (each way) to be safe. These numbers are drawn from here: 
-https://github.com/orrblue/GoKart/blob/master/autonomous_steering/autonomous_steering.ino
-turning left is negative, turning right is positive
-range should be (-maxLeftAngle, maxRightAngle)
-
-pwm modulation time -> one value for turnLeft, one value for turnRight,
-one value for don't turn at all
-feedback loop -> continuously turns until reaches angle
-We know it has reached angle based on encoder rotation/tick value
-
-duty cycle (microseconds) -> sets an angular speed ->
-encoder gear rotation -> modify duty cycle until numrotations
-reached
-
-mapping encoder ticks to angle: (ratio of [encoder ticks /
-degrees turned from vertical]) * nextAngle
-
-p-thread library
-have separate threads that call turnLeft, turnRight,
-check encoderTick value (offload to a fast c program)
-
-linear potentiometer (sensor that tells us how the wheels have turned)
-
-::: HYPOTHETICAL SAMPLE RUN :::
-turnWheels(-40)
-turnWheels(30)
-
-instance variables
-    current angle
-        -> tells us what angle the wheel is at right now
-        -> modified every time wheel turns
-        -> number of encoder gear rotations
-
-constants
-    -> ENCODER_RATIO: ratio for encoder ticks -> angle
-    -> DO_NOT_TURN: microseconds value for turning 0 degrees from parallel
-    -> TURN_LEFT: microseconds value for turning left
-    -> TURN_RIGHT: microseconds value for turning right
-    -> MAX_TURN_ANGLE: max angle to turn
-    -> MIN_TURN_ANGLE: min angle to turn
-
-methods
-    turnWheels(double angle)
-        -> sets wheels to the angle from the vertical based on a given angle
-        -> modifies current angle
-        -> *** FOR NOW, ASSUME INITIAL POSITION IS VERTICAL ***
-    turnLeft()
-        -> turns left for some time period
-    turnRight()
-        -> turns right for some time period
-    getCurrentAngle()
-        -> returns current angle
-    updateCurrentAngle()
-        -> updates current angle based on rotations
-    calculateTurnRadius(double angle)
-        -> calculates and returns turnRadius based on a given angle
-            adjustWheels()
-        -> checks whether wheels are at correct position and adjusts
-            them to their current angle
-        -> gets the current wheel angle from a sensor?
-            resetWheels()
-        -> sets wheels to face vertically parallel
-        -> can do this from any angle
-        -> gets amount to turn to reset based on sensor value
-    getEncoderRotations() - may need to expand more on actually
-            accessing encoder rotations
-        -> when called returns the current number of encoder ticks
-
-
-
-turnWheels(double angle)
-{
-    if angle < 0 and greater than MIN_TURN_ANGLE
-        while(getEncoderRotations != ENCODER_RATIO * angle) - use compareTo
-            turnLeft() //set speed turnLeft
-            updateCurrentAngle()
-
-    if angle > 0 and less than MAX_TURN_ANGLE
-        while(getEncoderRotations != ENCODER_RATIO * angle) - use compareTo
-            turnRight()
-            updateCurrentAngle()
-
-}
-"""""
+# todo: remove todo comments as they are completed
+# todo: write wheel_angle getter
+#
 
 
 class Actuator(object):
+    """
+    Actuator class is responsible for taking
+    """
     def __init__(self, drive_data, pwm=None):
         self.pwm = pwm if pwm else pca.PwmChip("/dev/i2c-1", 0x40)
         self.pwm.activate()
         self.data = drive_data
-        self.rotations = self.find_steering_start_position()
-        self.dir_chan = pwm.get_channel(1)  # direction channel
-        self.mag_chan = pwm.get_channel(2)  # turn rate channel
-        self.speed_chan = pwm.get_channel(0)  # main motor power channel
+        self.dir_chan = self.pwm.get_channel(1)  # direction channel
+        self.mag_chan = self.pwm.get_channel(2)  # turn rate channel
+        self.speed_chan = self.pwm.get_channel(0)  # main motor power channel
 
         self._tgt_turn_radius = 0  # these should always begin zeroed
         self._tgt_speed = 0  # these should always begin zeroed
 
-    def update_current_rotations(self):
-        self.rotations = self.get_encoder_rotations()
-
-    def find_steering_start_position(self) -> float:
-        """
-        Finds starting position in rotations
-        :return: number
-        """
-        # todo
-
-    def get_encoder_rotations(self):
-        return 1
-
     # need to implement ^
+    def tic(self) -> None:
+        """
+        Called in a loop by the actuator thread.
+        """
+        tgt_angle = self._radius_to_wheel_angle(self.turn_radius)
+        self.update_steering_servo(tgt_angle)
 
-    def turn_wheels(self, angle):
-        # this method as currently implemented will likely never exit.
-        # TODO: This method should be re-written that it can be be called
-        # continuously and set wheel turn each time.
-        # TODO: wheel turn rate should also be reduced as the target angle is
-        # approached so that the wheels are not subject to stutter
-
+    def update_steering_servo(self, tgt_angle) -> None:
+        """
+        Updates instructions to steering servo based on current wheel
+        position and passed target angle
+        """
         # if angle is outside bounds, throw exception
-        if not MIN_WHEEL_TURN_ANGLE < angle < MAX_WHEEL_TURN_ANGLE:
+        if not MIN_WHEEL_TURN_ANGLE < tgt_angle < MAX_WHEEL_TURN_ANGLE:
             raise ValueError(
                 'Actuator.turn_wheels: Passed angle {} was outside bounds '
                 '({} to {})'.format(
-                    angle, MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE
+                    tgt_angle, MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE
                 )
             )
-        encoder_ratio = ENCODER_RATIO * angle
-        if angle > self.MIN_TURN_ANGLE and angle < 0:
-            while self.get_encoder_rotations() != encoder_ratio:
-                self.turn_wheels_left()
-                self.update_current_rotations()
-        elif angle < self.MAX_TURN_ANGLE and angle > 0:
-            while self.get_encoder_rotations() != encoder_ratio:
-                self.turn_wheels_right()
-                self.update_current_rotations()
+        # find target wheel angle from passed turn radius
+        difference = self.wheel_angle - tgt_angle
+        # difference is positive if actual position is right of tgt
+        # negative if actual position is left of target.
+        rate = -difference / WHEEL_TURN_DAMPER_ANGLE
+        self.turn_wheels(rate)
 
-    def turn_wheels_left(self, rate=1):
+    def turn_wheels(self, rate) -> None:
+        """
+        Turns wheels left or right depending on the passed rate.
+        If a negative number is passed, turns left, if positive,
+        turns right.
+        If a number greater than 1 or less than -1 is passed, it is
+        treated as 1 or -1 respectively.
+        Passing 0 stops all rotation.
+        :param rate: float from -1 to 1.
+        :return:
+        """
+        if rate > 1:
+            rate = 1
+        elif rate < -1:
+            rate = -1
+        self.dir_chan.duty_cycle = 1 if rate >= 0 else 0
+        self.mag_chan.duty_cycle = abs(rate)
+
+    def turn_wheels_left(self, rate=1) -> None:
         """
         Helper method, sets PWM channel so as to have the steering
         motor move turning wheels to the left at passed rate, with
@@ -164,7 +97,7 @@ class Actuator(object):
         self.dir_chan.duty_cycle = 0
         self.mag_chan.duty_cycle = rate
 
-    def turn_wheels_right(self, rate=1):
+    def turn_wheels_right(self, rate=1) -> None:
         """
         Helper method, sets PWM channel so as to have the steering
         motor move turning wheels to the right at passed rate, with
@@ -175,7 +108,7 @@ class Actuator(object):
         self.dir_chan.duty_cycle = 1
         self.mag_chan.duty_cycle = rate
 
-    def stop_wheel_turn(self):
+    def stop_wheel_turn(self) -> None:
         """
         Sets PWM channel so as to instruct steering motor to stop.
         :return: None
@@ -211,7 +144,7 @@ class Actuator(object):
         Gets the currently set turn radius in meters.
         :return: float (negative left, positive right, 0 == no turn)
         """
-        # TODO
+        return self._tgt_turn_radius
 
     @turn_radius.setter
     def turn_radius(self, turn_radius: float) -> None:
@@ -221,21 +154,28 @@ class Actuator(object):
         :param turn_radius: float (m)
         :return: None
         """
-        # TODO
+        self._tgt_turn_radius = turn_radius
 
-    ###################################################################
+    @property
+    def wheel_angle(self) -> float:
+        """
+        Gets the current angle of the steering wheels.
+        :return: angle in radians.
+        """
+        return None  # todo: get value from appropriate clib wrapper
 
-    def _get_steering_link_move_distance(self, wheel_rotation: float) -> float:
+    @staticmethod  # doesn't need to be an Actuator member, but it makes sense.
+    def _radius_to_wheel_angle(turn_radius: float) -> float:
         """
-        Gets distance required of
-        :return:
+        Converts a passed turn radius into the corresponding wheel angle
+        that would result in the passed turn radius
+        :param: float of turn radius
+        :return: float of wheel angle in radians
         """
-
-    def _get_steering_column_rot(self, steering_link_motion: float) -> float:
-        """
-        Gets rotation required of steering column
-        :return:
-        """
+        # if turn radius is 0, vehicle should move straight ahead, return 0
+        if turn_radius == 0:
+            return 0
+        return math.atan(WHEEL_BASE / turn_radius)
 
 
 class VirtualActuator(object):
