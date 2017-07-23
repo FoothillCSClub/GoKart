@@ -7,7 +7,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from kart.actuator.actuator import Actuator
-from kart.const.phys_const import MAX_SPEED
+from kart.const.phys_const import MAX_SPEED, WHEEL_BASE
 
 
 class TestActuator(TestCase):
@@ -62,6 +62,50 @@ class TestActuator(TestCase):
         a = Actuator(None, mock_pwm)  # data instance will not be used
         a.turn_wheels_left()
         self.chan1.set_duty_cycle.assert_called_with(0)
+
+    def test_radius_to_wheel_angle_returns_correctly_at_10m_right_radius(self):
+        # check that physical constants have not changed. If they
+        # have, point out that this test is no longer accurate
+        assert WHEEL_BASE == 1.04, \
+            'Wheel base has changed, this test should be refactored'
+        mock_pwm = Mock(name='mock_pwm')
+        mock_pwm.get_channel = self.mock_channel_getter
+        a = Actuator(None, mock_pwm)  # data instance will not be used
+        # assert floats are equal to 7 places
+        self.assertAlmostEquals(0.103627459997, a._radius_to_wheel_angle(10))
+
+    def test_radius_to_wheel_angle_returns_correctly_at_5m_right_radius(self):
+        # check that physical constants have not changed. If they
+        # have, point out that this test is no longer accurate
+        assert WHEEL_BASE == 1.04, \
+            'Wheel base has changed, this test should be refactored'
+        mock_pwm = Mock(name='mock_pwm')
+        mock_pwm.get_channel = self.mock_channel_getter
+        a = Actuator(None, mock_pwm)  # data instance will not be used
+        # assert floats are equal to 7 places
+        self.assertAlmostEquals(0.205075900383, a._radius_to_wheel_angle(5))
+
+    def test_radius_to_wheel_angle_returns_correctly_at_0_radius(self):
+        # check that physical constants have not changed. If they
+        # have, point out that this test is no longer accurate
+        assert WHEEL_BASE == 1.04, \
+            'Wheel base has changed, this test should be refactored'
+        mock_pwm = Mock(name='mock_pwm')
+        mock_pwm.get_channel = self.mock_channel_getter
+        a = Actuator(None, mock_pwm)  # data instance will not be used
+        # assert floats are equal to 7 places
+        self.assertAlmostEquals(0, a._radius_to_wheel_angle(0))
+
+    def test_radius_to_wheel_angle_returns_correctly_at_5m_left_radius(self):
+        # check that physical constants have not changed. If they
+        # have, point out that this test is no longer accurate
+        assert WHEEL_BASE == 1.04, \
+            'Wheel base has changed, this test should be refactored'
+        mock_pwm = Mock(name='mock_pwm')
+        mock_pwm.get_channel = self.mock_channel_getter
+        a = Actuator(None, mock_pwm)  # data instance will not be used
+        # assert floats are equal to 7 places
+        self.assertAlmostEquals(-0.205075900383, a._radius_to_wheel_angle(-5))
 
     class MockPwmChannel(Mock):
         @property
