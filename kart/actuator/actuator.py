@@ -33,14 +33,12 @@ class Actuator(object):
         self.pwm = pwm if pwm else pca.PwmChip("/dev/i2c-1", 0x40)
         self.pwm.activate()
         self.data = drive_data
-        self.dir_chan = self.pwm.get_channel(1)  # direction channel
+        self.dir_chan = self.pwm.get_channel(1)  # direction channel; 0 == left
         self.mag_chan = self.pwm.get_channel(2)  # turn rate channel
         self.speed_chan = self.pwm.get_channel(0)  # main motor power channel
 
         self._tgt_turn_radius = 0  # these should always begin zeroed
         self._tgt_speed = 0  # these should always begin zeroed
-
-    # need to implement ^
     def tic(self) -> None:
         """
         Called in a loop by the actuator thread.
