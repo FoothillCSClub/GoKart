@@ -32,5 +32,11 @@
 *.pyc
 __pycache__/*
 
-# some sort of IDE bilge
+# Compiled Cython
+kart/kinect/pm/*.c
+
+# build folder
+build/*
+
+# Pycharm / Intellij ide bilge
 .idea/*

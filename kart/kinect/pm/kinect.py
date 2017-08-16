@@ -1,10 +1,7 @@
 import freenect as fn
 import time as t
-import pyximport
 import numpy as np
 
-# build cython functions
-pyximport.install()
 from . import cyfunc
 
 # grab PointCloud class from cyfunc so that it can be used here and
