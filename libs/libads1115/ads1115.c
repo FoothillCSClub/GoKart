@@ -14,6 +14,7 @@
 
 #include "ads1115.h"
 
+#define EXTRACT_CONFIG(reg, mask, offset)		(((reg) & (mask)) >> (offset))
 #define ALTER_CONFIG(reg, mask, offset, val)		((reg) = ((reg) & ~(mask)) | (((int) (val)) << (offset)))
 
 static inline int set_reg_pointer(ads1115_t ads, uint8_t regnum) {
@@ -171,7 +172,22 @@ int ads1115_sample(ads1115_t ads, int16_t *res) {
 }
 
 void ads1115_free(ads1115_t ads) {
-	if (ads->fd >= 0)
+	if (ads->fd >= 0) {
+		if ((enum ads1115_mode) EXTRACT_CONFIG(
+				ads->config,
+				ADS1115_MODE_MASK,
+				ADS1115_MODE_OFFSET
+			) ==
+			ADS1115_MODE_CONTINUOUS
+		)
+			ads1115_config(
+				ads,
+				ADS1115_MUX_CONFIG_DEFAULT,
+				ADS1115_PGA_GAIN_DEFAULT,
+				ADS1115_MODE_ONE_SHOT,
+				ADS1115_DATA_RATE_DEFAULT
+			);
 		close(ads->fd);
+	}
 	free(ads);
 }
