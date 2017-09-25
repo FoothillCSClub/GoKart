@@ -80,7 +80,7 @@ def ads1115_sample_errcheck(res, func, args):
 	return res
 
 ads1115_sample = clib.ads1115_sample
-ads1115_sample.argtypes = [c_ads1115_p, POINTER(c_int6)]
+ads1115_sample.argtypes = [c_ads1115_p, POINTER(c_int16)]
 ads1115_sample.restype = c_int
 ads1115_sample.errcheck = ads1115_sample_errcheck
 
