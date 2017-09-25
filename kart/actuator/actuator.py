@@ -10,8 +10,17 @@ try:
 except OSError as e:
     pca = None
     print('could not import pca9685 from hardware: ' + str(e))
+
+# same for ADS1115...
+try:
+    from ..hardware import ads1115 as ads
+except OSError as e:
+    ads = None
+    print('could not import ADS1115 from under hardware: ' + str(e))
+
 from ..const.phys_const import MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE, \
-    MAX_SPEED as PHYS_MAX_SPEED, WHEEL_BASE
+    MAX_SPEED as PHYS_MAX_SPEED, WHEEL_BASE, MIN_WHEEL_TURN_VALUE, \
+    MID_WHEEL_TURN_VALUE, MAX_WHEEL_TURN_VALUE
 
 
 # angle in radians within which the wheel turn rate is
@@ -20,18 +29,17 @@ from ..const.phys_const import MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE, \
 # approaches target.
 WHEEL_TURN_DAMPER_ANGLE = 0.0174  # 0.0174 radians == 1 degrees
 
-# todo: remove todo comments as they are completed
-# todo: write wheel_angle getter
-#
-
-
 class Actuator(object):
     """
     Actuator class is responsible for taking
     """
-    def __init__(self, drive_data, pwm=None):
+    def __init__(self, drive_data, pwm=None, adc=None):
         self.pwm = pwm if pwm else pca.PwmChip("/dev/i2c-1", 0x40)
         self.pwm.activate()
+        self.adc = adc if adc else ads.Ads1115("/dev/i2c-1", 0x48, MUX_CONFIG_SINGLE_AIN0, \
+                                                PGA_GAIN_4V096,
+                                                MODE_ONE_SHOT,
+                                                DATA_RATE_250SPS)
         self.data = drive_data
         self.dir_chan = self.pwm.get_channel(1)  # direction channel; 0 == left
         self.mag_chan = self.pwm.get_channel(2)  # turn rate channel
@@ -160,7 +168,13 @@ class Actuator(object):
         Gets the current angle of the steering wheels.
         :return: angle in radians.
         """
-        return None  # todo: get value from appropriate clib wrapper
+        wheel_value = self.adc.sample()
+        if wheel_value > MID_WHEEL_TURN_VALUE:
+            return (wheel_value - MID_WHEEL_TURN_VALUE) * MAX_WHEEL_ANGLE / MAX_WHEEL_TURN_VALUE
+        elif wheel_value < MID_WHEEL_TURN_VALUE:
+            return (MID_WHEEL_TURN_VALUE - wheel_value) * MIN_WHEEL_ANGLE / MIN_WHEEL_TURN_VALUE
+        else
+            return 0
 
     @staticmethod  # doesn't need to be an Actuator member, but it makes sense.
     def _radius_to_wheel_angle(turn_radius: float) -> float:
