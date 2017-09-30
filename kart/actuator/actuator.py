@@ -27,7 +27,7 @@ from ..const.phys_const import MIN_WHEEL_TURN_ANGLE, MAX_WHEEL_TURN_ANGLE, \
 # reduced as actual angle approaches target angle.
 # prevents wheel 'stutter' by reducing speed as wheel angle
 # approaches target.
-WHEEL_TURN_DAMPER_ANGLE = 0.0174  # 0.0174 radians == 1 degrees
+WHEEL_TURN_DAMPER_ANGLE = 0.0174 * 10 # 0.0174 radians == 1 degrees
 
 class Actuator(object):
     """
