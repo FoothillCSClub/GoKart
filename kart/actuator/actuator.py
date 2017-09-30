@@ -3,6 +3,8 @@ This module holds motion controllers
 """
 
 import math
+from time import sleep
+
 # try to import pca module, but that might not be possible if we're
 # just doing a unittest or testing in a simulated environment
 try:
@@ -38,7 +40,7 @@ class Actuator(object):
         self.pwm.activate()
         self.adc = adc if adc else ads.Ads1115("/dev/i2c-1", 0x48, ads.MUX_CONFIG_SINGLE_AIN0, \
                                                 ads.PGA_GAIN_4V096, \
-                                                ads.MODE_ONE_SHOT, \
+                                                ads.MODE_CONTINUOUS, \
                                                 ads.DATA_RATE_250SPS)
         self.data = drive_data
         self.dir_chan = self.pwm.get_channel(1)  # direction channel; 0 == left
@@ -53,6 +55,11 @@ class Actuator(object):
         """
         tgt_angle = self._radius_to_wheel_angle(self.turn_radius)
         self.update_steering_servo(tgt_angle)
+
+    def seek(self) -> None:
+        while True:
+            self.tic()
+            sleep(0.01)
 
     def update_steering_servo(self, tgt_angle) -> None:
         """
@@ -90,7 +97,10 @@ class Actuator(object):
         elif rate < -1:
             rate = -1
         self.dir_chan.duty_cycle = 1 if rate >= 0 else 0
-        self.mag_chan.duty_cycle = abs(rate)
+        if abs(rate) >= 0.3:
+            self.mag_chan.duty_cycle = abs(rate)
+        else:
+            self.mag_chan.duty_cycle = 0
 
     def turn_wheels_left(self, rate=1) -> None:
         """
